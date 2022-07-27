@@ -3,15 +3,17 @@
 	-fx-primary-color: #f4e04d;
 	-fx-secondary-color:  #5EB1BF;
     -fx-hover-color:  #F5E35D   ;
+    -fx-hover-blue-color:  #59D2D9   ;
 }
 #backgroundPane{
     -fx-background-color:  -fx-main-background-color;
 }
 #textField{
     -fx-background-color:transparent;
-    -fx-border-color:-fx-primary-color;
-    -fx-border-radius:100px;
-    -fx-text-fill: -fx-hover-color;
+    -fx-border-color:-fx-secondary-color;
+    -fx-border-radius:10px;
+    -fx-text-fill: -fx-secondary-color;
+    -fx-font-size: 22px; 
 }
 
 #textField:focused{
@@ -92,6 +94,6 @@
 .combo-box .cell{
     -fx-text-fill: -fx-secondary-color;
 }
-#mainPagePane{
+#pane{
     -fx-border-color:-fx-primary-color transparent -fx-primary-color transparent;
 }
