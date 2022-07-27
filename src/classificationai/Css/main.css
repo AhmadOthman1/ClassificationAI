@@ -1,0 +1,97 @@
+* {
+    -fx-main-background-color: #042A2B;
+	-fx-primary-color: #f4e04d;
+	-fx-secondary-color:  #5EB1BF;
+    -fx-hover-color:  #F5E35D   ;
+}
+#backgroundPane{
+    -fx-background-color:  -fx-main-background-color;
+}
+#textField{
+    -fx-background-color:transparent;
+    -fx-border-color:-fx-primary-color;
+    -fx-border-radius:100px;
+    -fx-text-fill: -fx-hover-color;
+}
+
+#textField:focused{
+    -fx-border-color:-fx-secondary-color;
+}
+#button{
+    -fx-background-color:-fx-primary-color;
+    -fx-background-radius:50px;
+    -fx-text-fill: -fx-main-background-color;
+}
+#button:hover{
+    -fx-background-color:  -fx-hover-color;
+}
+#button:armed{
+    -fx-background-color:  -fx-primary-color;
+}
+#Tbutton{
+    -fx-background-color:transparent;
+    -fx-border-color:-fx-primary-color;
+    -fx-border-radius:20px;
+    -fx-background-radius:20px;
+    -fx-text-fill:-fx-primary-color;
+}
+#Tbutton:hover{
+    -fx-background-color:  -fx-hover-color;
+    -fx-text-fill:-fx-main-background-color;
+    -fx-border-radius:20px;
+    -fx-background-radius:20px;
+}
+#Tbutton:armed{
+    -fx-background-color:  -fx-primary-color;
+    -fx-text-fill:-fx-main-background-color;
+    -fx-border-radius:20px;
+    -fx-background-radius:20px;
+}
+#backButton{
+    -fx-background-color:-fx-secondary-color;
+    -fx-background-image: url("../images/backW.png");
+    -fx-border-radius:  100%;
+    -fx-background-radius:  50px;
+    -fx-background-repeat: no-repeat; 
+    -fx-background-size: 20px 20px; 
+    -fx-background-position: center center;
+}
+#backButton:hover{
+    -fx-background-color:  -fx-hover-color;
+}
+#backButton:armed{
+    -fx-background-color:  -fx-primary-color;
+}
+#grid{
+     -fx-border-color:-fx-primary-color;
+}
+#locatePane{
+    -fx-border-color: -fx-primary-color transparent -fx-primary-color transparent;
+    -fx-border-width:2px;
+}
+.radio-button .radio{
+     -fx-border-color: -fx-primary-color;
+     -fx-border-radius: 100px;
+    -fx-background-color:transparent;
+    -fx-border-width:3px;
+}
+.radio-button:selected .radio{
+    -fx-background-color:-fx-primary-color;
+}
+.combo-box{
+    -fx-background-color:  transparent;
+    -fx-border-color: -fx-secondary-color;
+    -fx-border-radius:  10px;
+    -fx-background-radius:  10px;
+    -fx-text-fill: -fx-secondary-color;
+    -fx-font-size: 22px; 
+}
+#comboBoxBlackText{
+    -fx-text-fill: -fx-secondary-color;
+}
+.combo-box .cell{
+    -fx-text-fill: -fx-secondary-color;
+}
+#mainPagePane{
+    -fx-border-color:-fx-primary-color transparent -fx-primary-color transparent;
+}
