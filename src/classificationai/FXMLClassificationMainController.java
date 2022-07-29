@@ -14,9 +14,12 @@ import java.util.Random;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -24,6 +27,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -36,7 +40,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 
 /**
  * FXML Controller class
@@ -60,8 +66,6 @@ public class FXMLClassificationMainController implements Initializable {
     @FXML
     private Label excelFilePath;
     @FXML
-    private Label excelFileName;
-    @FXML
     private Button browseButton;
     @FXML
     private AnchorPane drawPnael;
@@ -74,7 +78,9 @@ public class FXMLClassificationMainController implements Initializable {
     
     float w1,w2,threshold,alfa;
     boolean isLearn=false;
-    Text t=new Text();;
+    Text t=new Text();
+    float mse;
+    Line line=new Line();
     
       //Setting the properties of the rectangle 
     @FXML
@@ -83,6 +89,8 @@ public class FXMLClassificationMainController implements Initializable {
     private Button learnButton;
     @FXML
     private Label testLabel;
+    @FXML
+    private Button UndoButton;
       
     /**
      * Initializes the controller class.
@@ -96,6 +104,7 @@ public class FXMLClassificationMainController implements Initializable {
         CategorieComboBox.setItems(FXCollections.observableArrayList("Two -Binary","Three -multi class","Four -multi class"));
         CategorieComboBox.getSelectionModel().selectFirst();
         
+        drawPnael.getChildren().add(line);
     }    
 
     @FXML
@@ -120,33 +129,18 @@ public class FXMLClassificationMainController implements Initializable {
         }
         
         if(event.getSource()==browseButton){
-           // mainPagePane.setVisible(false);
-           
+            drawPnael.getChildren().clear();
+            classpoints.clear();
+            isLearn=false;
         }
-//         if(event.getSource()==browseButton){
-//            FileChooser fileChooser = new FileChooser();
-//
-//            //Set extension filter
-//            FileChooser.ExtensionFilter extFilterJPG = new FileChooser.ExtensionFilter("XLSX files (*.xlsx)", "*.xlsx");
-//            fileChooser.getExtensionFilters().addAll(extFilterJPG);
-//            
-//            //ahmad 
-//            //Show open file dialog
-//            File file = fileChooser.showOpenDialog(null);
-//            if(file!=null){
-////                try {
-////                    //BufferedImage bufferedImage = ImageIO.read(file);
-////                   // WritableImage image = SwingFXUtils.toFXImage(bufferedImage, null);
-////                    
-////                        excelFilePath.setText(file.getPath());
-////                    
-////                } catch (IOException ex) {
-////                    
-////                } 
-//        }
-//        }
          if(event.getSource()==learnButton){
              learn();
+         }
+         if(event.getSource()==UndoButton){
+             if(!classpoints.isEmpty() && !isLearn){
+             drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+             classpoints.remove(classpoints.size()-1);
+             }
          }
     }
 
@@ -160,7 +154,6 @@ public class FXMLClassificationMainController implements Initializable {
                 arc.setStroke(Color.GREEN);
                 classpoints.add(event.getX()+","+event.getY()+",A");
                 drawPnael.getChildren().add(arc);
-                System.out.println(event.getX()+","+event.getY()+",A");
             }
             else if(classComboBox.getValue().equals("Class B")){
                 Rectangle rectangle = new Rectangle();  
@@ -172,7 +165,6 @@ public class FXMLClassificationMainController implements Initializable {
                 rectangle.setStroke(Color.RED);
                 rectangle.setFill(Color.TRANSPARENT);
                 drawPnael.getChildren().add(rectangle);
-                System.out.println(event.getX()+","+event.getY()+",B");
             }
         if(CategorieComboBox.getValue().equals("Three -multi class")){
             if(classComboBox.getValue().equals("Class C")){
@@ -187,7 +179,6 @@ public class FXMLClassificationMainController implements Initializable {
                fovTriangle.setStroke(Color.BLUE);
                fovTriangle.setFill(Color.TRANSPARENT);
                drawPnael.getChildren().add(fovTriangle);
-               System.out.println(event.getX()+","+event.getY()+",C");
             }
         }
         else if(CategorieComboBox.getValue().equals("Four -multi class")){
@@ -203,7 +194,6 @@ public class FXMLClassificationMainController implements Initializable {
                fovTriangle.setStroke(Color.BLUE);
                fovTriangle.setFill(Color.TRANSPARENT);
                drawPnael.getChildren().add(fovTriangle);
-               System.out.println(event.getX()+","+event.getY()+",C");
             }
             
             if(classComboBox.getValue().equals("Class D")){
@@ -212,7 +202,6 @@ public class FXMLClassificationMainController implements Initializable {
                 arc.setFill(Color.TRANSPARENT);
                 arc.setStroke(Color.YELLOW);
                 classpoints.add(event.getX()+","+event.getY()+",D");
-                System.out.println(event.getX()+","+event.getY()+",D");
                 drawPnael.getChildren().add(arc);
             }
             
@@ -231,24 +220,6 @@ public class FXMLClassificationMainController implements Initializable {
         }
     }
 
-    @FXML
-    private void mouseEntered(MouseEvent event) {
-      //  float a= (float)event.getX();
-      //  System.out.println(a);
-      //  System.out.println(event.getX());
-        //if(event.) g.drawLine(xa, m*xa + c, xb, m*xb + c)
-//        float b=-0.2;
-//        float w1=-0.1;
-//        float w2=0.1;
-        
-//      float  x_intercept = (0, -b / w2);
-//       float y_intercept = (-b / w1, 0);
-      //  Line line=new Line(0f,(b/w2), (b / w1),0f);
-      //Line line=new Line(0,0+drawPnael.getHeight(),drawPnael.getWidth(),0);
-       // drawPnael.getChildren().add(line);
-//        System.out.println(drawPnael.getWidth());
-//        System.out.println(drawPnael.getHeight());
-    }
     
     private void learn(){
         isLearn=true;
@@ -257,94 +228,104 @@ public class FXMLClassificationMainController implements Initializable {
 //        classpoints.add("1,0,0");
 //        classpoints.add("1,1,1");
         Random rand = new Random();
-        Random rand2 = new Random();
-        Random rand3 = new Random();
         w1=rand.nextFloat(-0.5f, 0.5f);
-        System.out.println("w1="+w1);
-        w2=rand2.nextFloat(-0.5f, 0.5f);
-        System.out.println("w2="+w2);
-        threshold=rand3.nextFloat(-0.5f, 0.5f);
-        System.out.println("threshold="+threshold);
+        w2=rand.nextFloat(-0.5f, 0.5f);
+        threshold=rand.nextFloat(-0.5f, 0.5f);
 //        w1=0.3f;
 //        w2=-0.1f;
 //        threshold=0.2f;
         
-        float x1=0;
-        float x2;
-        float delta_w1;
-        float delta_w2;
-        float bigX;
-        int yd;
-        int ya;
-        int error;
+        float x1,x2,delta_w1,delta_w2,bigX,delta_threshold;
+        int yd,ya,error;
+        
         alfa=Float.parseFloat(learningRate.getText());
         for(int i=0;i<Integer.parseInt(iterationsNum.getText());i++){
+           int ta=0,tb=0,na=0,nb=0;
+           int actualA=0,actualB=0;
+           int predectedA=0,predectedB=0;
+            mse=0;
             for(int j=0;j<classpoints.size();j++){
            String [] Spoint =classpoints.get(j).split(",");
            x1=Float.parseFloat(Spoint[0]);
            x2=Float.parseFloat(Spoint[1]);
-           if(Spoint[2].equals("A"))yd=1; else yd=0;
-          // yd=Integer.parseInt(Spoint[2]);
+           if(Spoint[2].equals("A")){
+               yd=1;
+               actualA++;
+           }
+           else{ yd=0;
+           actualB++;
+           }
+          //  yd=Integer.parseInt(Spoint[2]);
             System.out.println("x1="+x1);
             System.out.println("x2="+x2);
             System.out.println("yd="+yd);
            bigX=(x1*w1)+(x2*w2)+(threshold*-1);
            System.out.println("bigX="+bigX);
-           if(bigX>=0)ya=1;
-            else ya=0;
+           if(bigX>=0){
+               ya=1;
+               predectedA++;
+           }
            
+            else {
+               ya=0;
+               predectedB++;
+           }
+           if(yd==1 && ya==1){
+               ta++;
+           }
+           else if(yd==1 && ya==0){
+               na++;
+           }
+           else if(yd==0 && ya==0){
+               tb++;
+           }
+           else if(yd==0 && ya==1){
+               nb++;
+           }
            error=yd-ya;
            System.out.println("ya="+ya);
            System.out.println("error="+error);
            
-           delta_w1=alfa*(x1*error);
-           w1=w1+delta_w1;
-           
-           delta_w2=alfa*(x2*error);
-           w2=w2+delta_w2;
+          
+           delta_w1=alfa*x1*error;
+               w1=w1+delta_w1;    
+           delta_w2=alfa*x2*error;
+               w2=w2+delta_w2;
+           delta_threshold=alfa*-1*error;    
+           threshold=threshold+delta_threshold;
            System.out.println("delta W1="+delta_w1);
            System.out.println("delta W2="+delta_w2);
            System.out.println(" W1="+w1);
            System.out.println(" W2="+w2);
-           
+           System.out.println("delta delta_threshold="+delta_threshold);
+           System.out.println(" threshold="+threshold);
+           mse=Math.abs(yd-ya)+mse;
             }
-            System.out.println("############################################################");
+             System.out.println("msr="+mse);
+             mse=(1/(float)classpoints.size())*mse;
+             System.out.println("msr="+mse);
+            testLabel.setText("mse="+mse); 
+        System.out.println("            predected A     predected B");
+        System.out.println("Actual A    "+ta+"               "+na+"               "+actualA);
+        System.out.println("Actual B    "+nb+"               "+tb+"               "+actualB);
+        System.out.println("            "+predectedA+"               "+predectedB+"                          ");
+        System.out.println("############################################################");       
         }
         System.out.println("************");
         System.out.println("final W1="+w1);
-        System.out.println("final W2="+w2);
-        System.out.println("threshold/w2="+threshold/w2);
-        System.out.println("point2="+drawPnael.getWidth()+","+((threshold-(w1*drawPnael.getWidth()))/w2));
-        if((-w1/w2)>0){
-            Text t=new Text("X");
-            t.setX(0);
-            t.setY((threshold/w2));
-           // t.setY(((threshold-(w1*-drawPnael.getWidth()))/w2)-drawPnael.getHeight());
-            t.setStroke(Color.RED);
-            drawPnael.getChildren().add(t);
-            Text t2=new Text("X");
-            t2.setX(drawPnael.getWidth());
-            t2.setY(((-threshold-(w1*drawPnael.getWidth()))/w2));
-            t2.setStroke(Color.BLUE);
-            drawPnael.getChildren().add(t2);
-            Line line=new Line(0,-((threshold/w2)*drawPnael.getHeight())/(1/0.5f),drawPnael.getWidth(),((-threshold-(w1*drawPnael.getWidth()))/w2));
-            drawPnael.getChildren().add(line);
-        }
-        else{
-            Line line=new Line(0,(threshold/w2),drawPnael.getWidth(),((threshold-(w1*drawPnael.getWidth()))/w2));
-            //drawPnael.getChildren().add(line);
-        }
-        
-        
+        System.out.println("final W2="+w2+"\n\n");
+        drawPnael.getChildren().remove(line);
+        line=new Line(0,-(threshold/w2),drawPnael.getWidth(),((-threshold-(w1*drawPnael.getWidth()))/w2));
+        drawPnael.getChildren().add(line);
+        System.out.println("startY="+(threshold/w2));
+        System.out.println("endY="+((-threshold-(w1*drawPnael.getWidth()))/w2));
+
     }
     private void test(double x,double y){
-        System.out.println("(float)x="+(float)x);
-        System.out.println("(float)y="+(float)y);
         float bigx=((float)x*w1)+((float)y*w2)+(-1*threshold);
-        System.out.println("bigx="+bigx);
-        if(bigx>=0)testLabel.setText("class A");
-            else testLabel.setText("class B");
-        System.out.println("------------------------------------------------------------------------------------------");
+        if(bigx>=0)testLabel.setText("Tested point is: class A");
+            else testLabel.setText("Tested point is: class B");
+        
     }
     
 }
