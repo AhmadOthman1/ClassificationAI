@@ -79,6 +79,11 @@
                   <Font size="25.0" />
                </font>
             </Button>
+            <Button id="Tbutton" fx:id="backButton" layoutX="215.0" layoutY="449.0" mnemonicParsing="false" onAction="#actionButton" prefHeight="55.0" prefWidth="161.0" text="Back" textFill="WHITE">
+               <font>
+                  <Font size="25.0" />
+               </font>
+            </Button>
          </children>
       </AnchorPane>
       <AnchorPane fx:id="drawPnael" layoutX="323.0" layoutY="220.0" onMouseClicked="#mouseClickd" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #a3b18a;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="500.0" AnchorPane.topAnchor="0.0" />

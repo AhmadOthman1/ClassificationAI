@@ -75,8 +75,11 @@ public class FXMLClassificationMainController implements Initializable {
     ArrayList <String> classCpoints=new ArrayList(); 
     ArrayList <String> classDpoints=new ArrayList(); 
     ArrayList <String> classpoints=new ArrayList(); 
-    
-    float w1,w2,threshold,alfa;
+    float wxA[];
+    float wxB[];
+    float wxC[];
+    float wxD[];
+    float w1,w2,threshold,alfa,w0;
     boolean isLearn=false;
     Text t=new Text();
     float mse;
@@ -91,6 +94,8 @@ public class FXMLClassificationMainController implements Initializable {
     private Label testLabel;
     @FXML
     private Button UndoButton;
+    @FXML
+    private Button backButton;
       
     /**
      * Initializes the controller class.
@@ -133,8 +138,37 @@ public class FXMLClassificationMainController implements Initializable {
             classpoints.clear();
             isLearn=false;
         }
+        if(event.getSource()==backButton){
+            drawPnael.getChildren().clear();
+            classpoints.clear();
+            isLearn=false;
+            drawPnael.setVisible(false);
+            settingsPane.setVisible(false);
+            mainPagePane.setVisible(true);
+        }
          if(event.getSource()==learnButton){
-             learn();
+             if(isLearn){
+              drawPnael.getChildren().remove(line);
+              drawPnael.getChildren().remove(line);
+              drawPnael.getChildren().remove(line);
+             }
+             else drawPnael.getChildren().remove(line);
+             
+             if(CategorieComboBox.getValue().equals("Two -Binary")){
+               wxA= learn("A");
+            }
+            else if(CategorieComboBox.getValue().equals("Three -multi class")){
+               wxA= learn("A");
+               wxB= learn("B");
+               wxC= learn("C");
+            }
+            else{
+               wxA= learn("A");
+               wxB= learn("B");
+               wxC= learn("C");
+               wxD= learn("D");
+
+            }
          }
          if(event.getSource()==UndoButton){
              if(!classpoints.isEmpty() && !isLearn){
@@ -221,21 +255,15 @@ public class FXMLClassificationMainController implements Initializable {
     }
 
     
-    private void learn(){
+    private float[] learn(String type){
         isLearn=true;
-//        classpoints.add("0,0,0");
-//        classpoints.add("0,1,0");
-//        classpoints.add("1,0,0");
-//        classpoints.add("1,1,1");
         Random rand = new Random();
+        w0=rand.nextFloat(-0.5f, 0.5f);
         w1=rand.nextFloat(-0.5f, 0.5f);
         w2=rand.nextFloat(-0.5f, 0.5f);
         threshold=rand.nextFloat(-0.5f, 0.5f);
-//        w1=0.3f;
-//        w2=-0.1f;
-//        threshold=0.2f;
         
-        float x1,x2,delta_w1,delta_w2,bigX,delta_threshold;
+        float x1,x2,delta_w1,delta_w2,delta_w0,bigX,delta_threshold;
         int yd,ya,error;
         
         alfa=Float.parseFloat(learningRate.getText());
@@ -248,19 +276,14 @@ public class FXMLClassificationMainController implements Initializable {
            String [] Spoint =classpoints.get(j).split(",");
            x1=Float.parseFloat(Spoint[0]);
            x2=Float.parseFloat(Spoint[1]);
-           if(Spoint[2].equals("A")){
+           if(Spoint[2].equals(type)){
                yd=1;
                actualA++;
            }
            else{ yd=0;
            actualB++;
            }
-          //  yd=Integer.parseInt(Spoint[2]);
-            System.out.println("x1="+x1);
-            System.out.println("x2="+x2);
-            System.out.println("yd="+yd);
-           bigX=(x1*w1)+(x2*w2)+(threshold*-1);
-           System.out.println("bigX="+bigX);
+           bigX=((w0*(float)drawPnael.getWidth()))+(x1*w1)+(x2*w2)+(threshold*-1);
            if(bigX>=0){
                ya=1;
                predectedA++;
@@ -273,32 +296,24 @@ public class FXMLClassificationMainController implements Initializable {
            if(yd==1 && ya==1){
                ta++;
            }
-           else if(yd==1 && ya==0){
+            if(yd==1 && ya==0){
                na++;
            }
-           else if(yd==0 && ya==0){
+            if(yd==0 && ya==0){
                tb++;
            }
-           else if(yd==0 && ya==1){
+            if(yd==0 && ya==1){
                nb++;
            }
            error=yd-ya;
-           System.out.println("ya="+ya);
-           System.out.println("error="+error);
-           
-          
            delta_w1=alfa*x1*error;
                w1=w1+delta_w1;    
            delta_w2=alfa*x2*error;
                w2=w2+delta_w2;
+            delta_w0=alfa*((float)drawPnael.getWidth())*error;
+            w0=w0+delta_w0;
            delta_threshold=alfa*-1*error;    
            threshold=threshold+delta_threshold;
-           System.out.println("delta W1="+delta_w1);
-           System.out.println("delta W2="+delta_w2);
-           System.out.println(" W1="+w1);
-           System.out.println(" W2="+w2);
-           System.out.println("delta delta_threshold="+delta_threshold);
-           System.out.println(" threshold="+threshold);
            mse=Math.abs(yd-ya)+mse;
             }
              System.out.println("msr="+mse);
@@ -312,20 +327,68 @@ public class FXMLClassificationMainController implements Initializable {
         System.out.println("############################################################");       
         }
         System.out.println("************");
+        System.out.println("final W0="+w0);
         System.out.println("final W1="+w1);
         System.out.println("final W2="+w2+"\n\n");
-        drawPnael.getChildren().remove(line);
-        line=new Line(0,-(threshold/w2),drawPnael.getWidth(),((-threshold-(w1*drawPnael.getWidth()))/w2));
+        
+        line=new Line(0,((threshold-(w0*(float)drawPnael.getWidth()))/w2),drawPnael.getWidth(),((threshold-(w1*drawPnael.getWidth())-(w0*(float)drawPnael.getWidth()))/w2));
+        if(type.equals("A")){
+            line.setStroke(Color.GREEN);
+        }
+        else if(type.equals("B")){
+            line.setStroke(Color.RED);
+        }
+        else if(type.equals("C")){
+            line.setStroke(Color.BLUE);
+        }
+        else if(type.equals("D")){
+            line.setStroke(Color.YELLOW);
+        }
+        
         drawPnael.getChildren().add(line);
-        System.out.println("startY="+(threshold/w2));
-        System.out.println("endY="+((-threshold-(w1*drawPnael.getWidth()))/w2));
-
+        System.out.println(line.toString());
+        float xw[]={w0,w1,w2,threshold};
+        return xw;
     }
     private void test(double x,double y){
-        float bigx=((float)x*w1)+((float)y*w2)+(-1*threshold);
-        if(bigx>=0)testLabel.setText("Tested point is: class A");
-            else testLabel.setText("Tested point is: class B");
+        float bigxA;
+        float bigxB;
+        float bigxC;
+        float bigxD;
+        if(CategorieComboBox.getValue().equals("Two -Binary")){
+             bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+            if(bigxA>=0)testLabel.setText("Tested point is: class A");
+                else testLabel.setText("Tested point is: class B");
+            }
         
+        else if(CategorieComboBox.getValue().equals("Three -multi class")){
+                 bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+                if(bigxA>=0)testLabel.setText("Tested point is: class A");
+
+                 bigxB=((float)x*wxB[1])+((float)y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
+                if(bigxB>=0)testLabel.setText("Tested point is: class B");
+
+                 bigxC=((float)x*wxC[1])+((float)y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
+                if(bigxC>=0)testLabel.setText("Tested point is: class C");
+                
+                if(bigxC<0 && bigxB<0 && bigxA<0) testLabel.setText("Tested point does not belong to any class");
+
+        }
+        else{
+                 bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+                if(bigxA>=0)testLabel.setText("Tested point is: class A");
+
+                 bigxB=((float)x*wxB[1])+((float)y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
+                if(bigxB>=0)testLabel.setText("Tested point is: class B");
+
+                 bigxC=((float)x*wxC[1])+((float)y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
+                if(bigxC>=0)testLabel.setText("Tested point is: class C");    
+                
+                 bigxD=((float)x*wxD[1])+((float)y*wxD[2])+(-1*wxD[3])+(wxD[0]*(float)drawPnael.getWidth());
+                if(bigxD>=0)testLabel.setText("Tested point is: class D");
+                
+                if(bigxC<0 && bigxB<0 && bigxA<0 && bigxD<0) testLabel.setText("Tested point does not belong to any class");
+        }
     }
     
 }
