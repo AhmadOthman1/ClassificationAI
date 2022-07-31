@@ -70,17 +70,16 @@ public class FXMLClassificationMainController implements Initializable {
     @FXML
     private AnchorPane drawPnael;
 
-    ArrayList <String> classApoints=new ArrayList(); 
-    ArrayList <String> classBpoints=new ArrayList();
-    ArrayList <String> classCpoints=new ArrayList(); 
-    ArrayList <String> classDpoints=new ArrayList(); 
-    ArrayList <String> classpoints=new ArrayList(); 
+
+    ArrayList <String> testingPoints=new ArrayList(); 
+    ArrayList <String> classpoints=new ArrayList();
     float wxA[];
     float wxB[];
     float wxC[];
     float wxD[];
     float w1,w2,threshold,alfa,w0;
     boolean isLearn=false;
+    boolean isTest=false;
     Text t=new Text();
     float mse;
     Line line=new Line();
@@ -136,23 +135,43 @@ public class FXMLClassificationMainController implements Initializable {
         if(event.getSource()==browseButton){
             drawPnael.getChildren().clear();
             classpoints.clear();
+            testingPoints.clear();
             isLearn=false;
+            isTest=false;
         }
         if(event.getSource()==backButton){
             drawPnael.getChildren().clear();
             classpoints.clear();
+            testingPoints.clear();
             isLearn=false;
+            isTest=false;
             drawPnael.setVisible(false);
             settingsPane.setVisible(false);
             mainPagePane.setVisible(true);
         }
          if(event.getSource()==learnButton){
+             if(isTest)drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
              if(isLearn){
-              drawPnael.getChildren().remove(line);
-              drawPnael.getChildren().remove(line);
-              drawPnael.getChildren().remove(line);
+                 if(CategorieComboBox.getValue().equals("Two -Binary")){
+                     drawPnael.getChildren().remove(line);
+            }
+            else if(CategorieComboBox.getValue().equals("Three -multi class")){
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+            }
+            else{
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+            }
+              
              }
-             else drawPnael.getChildren().remove(line);
+             else {
+                 drawPnael.getChildren().remove(line);
+                 splitTestAndTrain();
+             }
              
              if(CategorieComboBox.getValue().equals("Two -Binary")){
                wxA= learn("A");
@@ -169,6 +188,7 @@ public class FXMLClassificationMainController implements Initializable {
                wxD= learn("D");
 
             }
+             confusionMatrix();
          }
          if(event.getSource()==UndoButton){
              if(!classpoints.isEmpty() && !isLearn){
@@ -257,6 +277,7 @@ public class FXMLClassificationMainController implements Initializable {
     
     private float[] learn(String type){
         isLearn=true;
+        isTest=false;
         Random rand = new Random();
         w0=rand.nextFloat(-0.5f, 0.5f);
         w1=rand.nextFloat(-0.5f, 0.5f);
@@ -305,6 +326,7 @@ public class FXMLClassificationMainController implements Initializable {
             if(yd==0 && ya==1){
                nb++;
            }
+
            error=yd-ya;
            delta_w1=alfa*x1*error;
                w1=w1+delta_w1;    
@@ -320,11 +342,11 @@ public class FXMLClassificationMainController implements Initializable {
              mse=(1/(float)classpoints.size())*mse;
              System.out.println("msr="+mse);
             testLabel.setText("mse="+mse); 
-        System.out.println("            predected A     predected B");
-        System.out.println("Actual A    "+ta+"               "+na+"               "+actualA);
-        System.out.println("Actual B    "+nb+"               "+tb+"               "+actualB);
-        System.out.println("            "+predectedA+"               "+predectedB+"                          ");
-        System.out.println("############################################################");       
+//        System.out.println("            predected A     predected B");
+//        System.out.println("Actual A    "+ta+"               "+na+"               "+actualA);
+//        System.out.println("Actual B    "+nb+"               "+tb+"               "+actualB);
+//        System.out.println("            "+predectedA+"               "+predectedB+"                          ");
+//        System.out.println("############################################################");       
         }
         System.out.println("************");
         System.out.println("final W0="+w0);
@@ -351,6 +373,7 @@ public class FXMLClassificationMainController implements Initializable {
         return xw;
     }
     private void test(double x,double y){
+        isTest=true;
         float bigxA;
         float bigxB;
         float bigxC;
@@ -363,32 +386,203 @@ public class FXMLClassificationMainController implements Initializable {
         
         else if(CategorieComboBox.getValue().equals("Three -multi class")){
                  bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
-                if(bigxA>=0)testLabel.setText("Tested point is: class A");
-
                  bigxB=((float)x*wxB[1])+((float)y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
-                if(bigxB>=0)testLabel.setText("Tested point is: class B");
-
                  bigxC=((float)x*wxC[1])+((float)y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
-                if(bigxC>=0)testLabel.setText("Tested point is: class C");
-                
-                if(bigxC<0 && bigxB<0 && bigxA<0) testLabel.setText("Tested point does not belong to any class");
+                 
+                if     (bigxA>=0)testLabel.setText("Tested point is: class A");
+                else if(bigxB>=0)testLabel.setText("Tested point is: class B");
+                else if(bigxC>=0)testLabel.setText("Tested point is: class C");
+                else testLabel.setText("Tested point does not belong to any class");
 
         }
         else{
-                 bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
-                if(bigxA>=0)testLabel.setText("Tested point is: class A");
-
-                 bigxB=((float)x*wxB[1])+((float)y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
-                if(bigxB>=0)testLabel.setText("Tested point is: class B");
-
-                 bigxC=((float)x*wxC[1])+((float)y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
-                if(bigxC>=0)testLabel.setText("Tested point is: class C");    
+                bigxA=((float)x*wxA[1])+((float)y*wxA[2])+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+                bigxB=((float)x*wxB[1])+((float)y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
+                bigxC=((float)x*wxC[1])+((float)y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
+                bigxD=((float)x*wxD[1])+((float)y*wxD[2])+(-1*wxD[3])+(wxD[0]*(float)drawPnael.getWidth());
                 
-                 bigxD=((float)x*wxD[1])+((float)y*wxD[2])+(-1*wxD[3])+(wxD[0]*(float)drawPnael.getWidth());
-                if(bigxD>=0)testLabel.setText("Tested point is: class D");
-                
-                if(bigxC<0 && bigxB<0 && bigxA<0 && bigxD<0) testLabel.setText("Tested point does not belong to any class");
+                 if     (bigxA>=0)testLabel.setText("Tested point is: class A");
+                 else if(bigxB>=0)testLabel.setText("Tested point is: class B");
+                 else if(bigxC>=0)testLabel.setText("Tested point is: class C");
+                 else if(bigxD>=0)testLabel.setText("Tested point is: class D");
+                 else testLabel.setText("Tested point does not belong to any class");
         }
     }
     
+        private void splitTestAndTrain(){
+        int testNumber=(int)(classpoints.size()*0.3);
+            Random rand=new Random();
+            for(int i=0;i<testNumber;i++){
+             int r=  rand.nextInt(0, classpoints.size());
+             String p[]=classpoints.get(r).split(",");
+             testingPoints.add(classpoints.get(r));
+             if(p[2].equals("A")){
+                Arc arc = new Arc(Double.parseDouble(p[0]), Double.parseDouble(p[1]), 10, 10, 0, 360);
+                arc.setStroke(Color.GREEN);
+                arc.setFill(Color.GREEN);
+                drawPnael.getChildren().add(arc);  
+             }
+             else if(p[2].equals("B")){
+                Rectangle rectangle = new Rectangle();  
+                rectangle.setX(Double.parseDouble(p[0])); 
+                rectangle.setY(Double.parseDouble(p[1]));
+                rectangle.setWidth(15.0); 
+                rectangle.setHeight(15.0);
+                rectangle.setFill(Color.RED);
+                rectangle.setStroke(Color.RED);
+                drawPnael.getChildren().add(rectangle);  
+             }
+             else if(p[2].equals("C")){
+                Polygon fovTriangle = new Polygon(
+                (10 * Math.tan(0)), -5,
+               (10 * Math.tan(70)), 10,
+               -(10 * Math.tan(70)), 10  
+                );
+               fovTriangle.setLayoutX(Double.parseDouble(p[0]));
+               fovTriangle.setLayoutY(Double.parseDouble(p[1]));
+               fovTriangle.setStroke(Color.BLUE);
+               fovTriangle.setFill((Color.BLUE));
+               drawPnael.getChildren().add(fovTriangle); 
+             }
+             else{
+                Arc arc = new Arc(Double.parseDouble(p[0]), Double.parseDouble(p[1]), 10, 10, 90, 270);
+                arc.setType(ArcType.ROUND);
+                arc.setFill(Color.YELLOW);
+                arc.setStroke(Color.YELLOW);
+                drawPnael.getChildren().add(arc);
+             }
+             classpoints.remove(r);
+            }
+
+    }
+        private void confusionMatrix(){
+            int ta=0,fa_b=0,fa_c=0,fa_d=0,tb=0,fb_a=0,fb_c=0,fb_d=0;
+            int td=0,fd_a=0,fd_b=0,fd_c=0,tc=0,fc_a=0,fc_b=0,fc_d=0;
+            float bigxA,bigxB,bigxC,bigxD;
+            for(int i=0;i<testingPoints.size();i++){
+                String point[]=testingPoints.get(i).split(",");
+                float x,y;
+                x=Float.parseFloat(point[0]);
+                y=Float.parseFloat(point[1]);
+                if(CategorieComboBox.getValue().equals("Two -Binary")){
+                     bigxA=((x*wxA[1]))+((y*wxA[2]))+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+                    if(bigxA>=0 && point[2].equals("A")){
+                        ta++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A")){
+                        fa_b++;
+                        }
+                    else if(bigxA<0 && point[2].equals("B")){
+                        tb++;
+                    }
+                    else{    
+                        fb_a++;
+                    }
+
+                }
+                else if(CategorieComboBox.getValue().equals("Three -multi class")){
+                     bigxA=((x*wxA[1]))+((y*wxA[2]))+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+                     bigxB=(x*wxB[1])+(y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
+                     bigxC=(x*wxC[1])+(y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
+                     
+                     if(bigxA>=0 && point[2].equals("A")){
+                        ta++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A") && bigxB>=0){
+                        fa_b++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A") && bigxC>=0){
+                        fa_c++;
+                        }
+                    else if(bigxB>=0 && point[2].equals("B")){
+                        tb++;
+                    }
+                    else if(bigxB<0 && point[2].equals("B") && bigxA>=0){
+                        fb_a++;
+                    }
+                    else if(bigxB<0 && point[2].equals("B") && bigxC>=0){
+                        fb_c++;
+                    }
+                    else if(bigxC>=0 && point[2].equals("C")){
+                        tc++;
+                    }
+                    else if(bigxC<0 && point[2].equals("C") && bigxA>=0){
+                        fc_a++;
+                    }
+                    else if(bigxC<0 && point[2].equals("C") && bigxB>=0){
+                        fc_b++;
+                    }
+                }
+                else{
+                bigxA=((x*wxA[1]))+((y*wxA[2]))+(-1*wxA[3])+(wxA[0]*(float)drawPnael.getWidth());
+
+                 bigxB=(x*wxB[1])+(y*wxB[2])+(-1*wxB[3])+(wxB[0]*(float)drawPnael.getWidth());
+
+                 bigxC=(x*wxC[1])+(y*wxC[2])+(-1*wxC[3])+(wxC[0]*(float)drawPnael.getWidth());
+                
+                 bigxD=(x*wxD[1])+(y*wxD[2])+(-1*wxD[3])+(wxD[0]*(float)drawPnael.getWidth());
+                 
+                    if(bigxA>=0 && point[2].equals("A")){
+                        ta++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A") && bigxB>=0){
+                        fa_b++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A") && bigxC>=0){
+                        fa_c++;
+                        }
+                    else if(bigxA<0 && point[2].equals("A") && bigxD>=0){
+                        fa_d++;
+                        }
+                    else if(bigxB>=0 && point[2].equals("B")){
+                        tb++;
+                    }
+                    else if(bigxB<0 && point[2].equals("B") && bigxA>=0){
+                        fb_a++;
+                    }
+                    else if(bigxB<0 && point[2].equals("B") && bigxC>=0){
+                        fb_c++;
+                    }
+                    else if(bigxB<0 && point[2].equals("B") && bigxD>=0){
+                        fb_d++;
+                    }
+                    else if(bigxC>=0 && point[2].equals("C")){
+                        tc++;
+                    }
+                    else if(bigxC<0 && point[2].equals("C") && bigxA>=0){
+                        fc_a++;
+                    }
+                    else if(bigxC<0 && point[2].equals("C") && bigxB>=0){
+                        fc_b++;
+                    }
+                    else if(bigxC<0 && point[2].equals("C") && bigxD>=0){
+                        fc_d++;
+                    }
+                    else if(bigxD>=0 && point[2].equals("D")){
+                           td++;
+                    }
+                    else if(bigxD<0 && point[2].equals("D") && bigxA>=0){
+                        fd_a++;
+                    }
+                    else if(bigxD<0 && point[2].equals("D") && bigxB>=0){
+                        fd_b++;
+                    }
+                    else if(bigxD<0 && point[2].equals("D") && bigxC>=0){
+                        fd_c++;
+                    }
+                }
+            }
+                 
+                
+        System.out.println("            predected A     predected B     predected C     predected D");
+        System.out.println("Actual A    "+ta+"               "+fa_b+"               "+fa_c+"               "+fa_d+"               "+(ta+fa_b+fa_c+fa_d));
+        System.out.println("Actual B    "+fb_a+"               "+tb+"               "+fb_c+"               "+fb_d+"               "+(tb+fb_a+fb_c+fb_d));
+        System.out.println("Actual C    "+fc_a+"               "+fc_b+"               "+tc+"               "+fc_d+"               "+(tc+fc_a+fc_b+fc_d));
+        System.out.println("Actual D    "+fd_a+"               "+fd_b+"               "+fd_c+"               "+td+"               "+(td+fd_a+fd_b+fd_c));
+        System.out.println("            "+(ta+fb_a+fc_a+fd_a)+"               "+(fa_b+tb+fc_b+fd_b)+"               "+(fa_c+tc+fb_c+fd_c)+"               "+(fa_d+td+fb_d+fc_d));
+        System.out.println("Accuracy=(TA+TB+TC+TD)/Total="+(ta+tb+tc+td)+"/"+((ta+fa_b+fa_c+fa_d)+(tb+fb_a+fb_c+fb_d)+(tc+fc_a+fc_b+fc_d)+(td+fd_a+fd_b+fd_c)));
+        System.out.println("Accuracy="+((ta+tb+tc+td)/((ta+fa_b+fa_c+fa_d)+(tb+fb_a+fb_c+fb_d)+(tc+fc_a+fc_b+fc_d)+(td+fd_a+fd_b+fd_c))));
+        System.out.println("############################################################");     
+        }
 }
+
