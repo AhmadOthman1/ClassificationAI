@@ -573,7 +573,7 @@ public class FXMLClassificationMainController implements Initializable {
                 }
             }
                  
-                
+        float accuracy=((float)(ta+tb+tc+td)/((ta+fa_b+fa_c+fa_d)+(tb+fb_a+fb_c+fb_d)+(tc+fc_a+fc_b+fc_d)+(td+fd_a+fd_b+fd_c)));        
         System.out.println("            predected A     predected B     predected C     predected D");
         System.out.println("Actual A    "+ta+"               "+fa_b+"               "+fa_c+"               "+fa_d+"               "+(ta+fa_b+fa_c+fa_d));
         System.out.println("Actual B    "+fb_a+"               "+tb+"               "+fb_c+"               "+fb_d+"               "+(tb+fb_a+fb_c+fb_d));
@@ -581,7 +581,8 @@ public class FXMLClassificationMainController implements Initializable {
         System.out.println("Actual D    "+fd_a+"               "+fd_b+"               "+fd_c+"               "+td+"               "+(td+fd_a+fd_b+fd_c));
         System.out.println("            "+(ta+fb_a+fc_a+fd_a)+"               "+(fa_b+tb+fc_b+fd_b)+"               "+(fa_c+tc+fb_c+fd_c)+"               "+(fa_d+td+fb_d+fc_d));
         System.out.println("Accuracy=(TA+TB+TC+TD)/Total="+(ta+tb+tc+td)+"/"+((ta+fa_b+fa_c+fa_d)+(tb+fb_a+fb_c+fb_d)+(tc+fc_a+fc_b+fc_d)+(td+fd_a+fd_b+fd_c)));
-        System.out.println("Accuracy="+((ta+tb+tc+td)/((ta+fa_b+fa_c+fa_d)+(tb+fb_a+fb_c+fb_d)+(tc+fc_a+fc_b+fc_d)+(td+fd_a+fd_b+fd_c))));
+        System.out.println("Accuracy="+accuracy);
+        System.out.println("Misclassification Rate= 1-Accuracy="+(1-accuracy));
         System.out.println("############################################################");     
         }
 }
