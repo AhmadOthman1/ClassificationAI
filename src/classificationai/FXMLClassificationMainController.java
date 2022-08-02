@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -53,9 +55,11 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import static org.apache.poi.hssf.usermodel.HeaderFooter.file;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -69,7 +73,6 @@ public class FXMLClassificationMainController implements Initializable {
     ArrayList <Point> points=new ArrayList();
     boolean isLearn=false;
     boolean isTest=false;
-    Text t=new Text();
     Line line=new Line();
     Line line2=new Line();
     float mse=0;
@@ -81,8 +84,8 @@ public class FXMLClassificationMainController implements Initializable {
     float []bestW;
     float minMSE=2;
     String cnumb="";
-    
-    
+    float [][]finalLineY;
+    int numOfTestPoints;
     
     @FXML
     private AnchorPane mainPagePane;
@@ -123,15 +126,17 @@ public class FXMLClassificationMainController implements Initializable {
     private Button saveButton;
     @FXML
     private Button openExcleButton;
+    @FXML
+    private AnchorPane mainPane;
       
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        drawPnael.getChildren().add(t);
-        epicNum.setText("5");
-        learningRate.setText("0.002");
+        epicNum.setText("10");
+        learningRate.setText("0.2");
+
       //  minMSETF.setText("0.02");
         // TODO        
         
@@ -140,11 +145,25 @@ public class FXMLClassificationMainController implements Initializable {
 
     @FXML
     private void actionButton(ActionEvent event) {
-        if(event.getSource()==startButton){
-            if(!CategorieNum.getText().trim().equals("")     &&      numaric(CategorieNum.getText().trim())     &&      Integer.parseInt(CategorieNum.getText().trim())>1   &&      Integer.parseInt(CategorieNum.getText().trim())<5){//if its a number
-                cNum=Integer.parseInt(CategorieNum.getText().trim());//num of classes
-                for(int i=0;i<cNum;i++)
-                    classComboBox.getItems().add(i);//add classes to the combo box
+        //if CategorieNum is a number
+        if(!CategorieNum.getText().trim().equals("")     &&      numaric(CategorieNum.getText().trim())     &&      Integer.parseInt(CategorieNum.getText().trim())>1   &&      Integer.parseInt(CategorieNum.getText().trim())<5){
+            cNum=Integer.parseInt(CategorieNum.getText().trim());//num of classes
+            finalLineY=new float[cNum][3];
+            for(int i=0;i<cNum;i++)
+                classComboBox.getItems().add(i);//add classes to the combo box
+            classComboBox.getSelectionModel().select(0);//select firs element as defult
+            //clear old data
+            drawPnael.getChildren().clear();
+            points.clear();
+            tPoints.clear();
+            isLearn=false;
+            isTest=false;
+            mse=0;
+            minMSE=2;
+            classesColors.clear();
+            numOfTestPoints=0;
+            
+            if(event.getSource()==startButton){
                 for(int i=0;i<cNum;i++){//add colors to point classes
                     Random random = new Random();
                     // create a big random number - maximum is ffffff (hex) = 16777215 (dez)
@@ -153,79 +172,112 @@ public class FXMLClassificationMainController implements Initializable {
                     String colorCode = String.format("#%06x", nextInt);
                     classesColors.add(colorCode);//specify color to each class
                 }
-                classComboBox.getSelectionModel().select(0);//select firs element as defult
-                
-                
                 mainPagePane.setVisible(false);
                 settingsPane.setVisible(true);
                 drawPnael.setVisible(true);
                 CategorieNumError.setVisible(false);
+
             }
-            else
-                CategorieNumError.setVisible(true);
-        }
-        else if(event.getSource()==openExcleButton){
-                mainPagePane.setVisible(false);
-                settingsPane.setVisible(true);
-                drawPnael.setVisible(true);
-                CategorieNumError.setVisible(false);
-                drawPnael.getChildren().clear();
-                points.clear();
-                tPoints.clear();
-                isLearn=false;
-                isTest=false;
-                mse=0;
-                minMSE=2;
-            try{
-                File file = new File("C:\\Users\\hp\\Desktop\\ai project\\ClassificationAI\\src\\classificationai\\points.xlsx");   //creating a new file instance  
-                FileInputStream fis = new FileInputStream(file);   //obtaining bytes from the file  
-                //creating Workbook instance that refers to .xlsx file  
-                XSSFWorkbook wb = new XSSFWorkbook(fis);   
-                XSSFSheet sheet = wb.getSheetAt(0);     //creating a Sheet object to retrieve object  
-                Iterator<Row> itr = sheet.iterator();    //iterating over excel file  
-                while (itr.hasNext())                 
-                {  
-                Row row = itr.next();  
-                Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column  
-               Arc arc=new Arc(0,0, 5, 5, 0, 360);
-                while (cellIterator.hasNext())   
-                {  
-                Cell cell = cellIterator.next(); 
-                int nclass;
-                float xp,yp,y2;
-                       xp= (float)cell.getNumericCellValue();
-                       cell = cellIterator.next(); 
-                       yp= (float)cell.getNumericCellValue();
-                       cell = cellIterator.next(); 
-                       nclass=(int)cell.getNumericCellValue();
-                       cell = cellIterator.next(); 
-                       arc.setFill(Paint.valueOf(cell.getStringCellValue()));
-                       y2= map(xp,-1,1,(float)drawPnael.getWidth(),0); 
-                        
-                       arc.setCenterX(y2);
-                       y2= map(yp,-1,1,(float)drawPnael.getHeight(),0); 
-                       arc.setCenterY(y2);
-                       points.add(new Point(xp,yp,nclass,arc));
-                       drawPnael.getChildren().add(arc);
+            else if(event.getSource()==openExcleButton){
+                try{
+                    FileChooser fileChooser = new FileChooser();
+                    FileChooser.ExtensionFilter extFilterXLSX = new FileChooser.ExtensionFilter("XLSX files (*.xlsx)", "*.XLSX");//Set extension filter
+                    fileChooser.getExtensionFilters().addAll(extFilterXLSX);
+                    File file = fileChooser.showOpenDialog(null);
+                    if(file!=null){
+                        FileInputStream fis = new FileInputStream(file);   //obtaining bytes from the file  
+                        //creating Workbook instance that refers to .xlsx file  
+                        XSSFSheet sheet = new XSSFWorkbook(fis).getSheetAt(0);     //creating a Sheet object to retrieve object  
+                        Iterator<Row> itr = sheet.iterator();    //iterating over excel file  
+                        while (itr.hasNext()){
+                            Row row = itr.next();  
+                            Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column  
+                            Arc arc=new Arc(0,0, 5, 5, 0, 360);
+                            while (cellIterator.hasNext()){  
+                                Cell cell = cellIterator.next(); 
+                                int nclass;
+                                float xp,yp;
+                                xp= (float)cell.getNumericCellValue();
+                                cell = cellIterator.next(); 
+                                yp= (float)cell.getNumericCellValue();
+                                cell = cellIterator.next(); 
+                                nclass=(int)cell.getNumericCellValue();
+                                cell = cellIterator.next();
+                                boolean colorNotExists=true;
+                                //add colors without repetition
+                                if(classesColors.isEmpty())
+                                    classesColors.add(nclass,cell.getStringCellValue());
+                                else
+                                    for(int i=0;i<classesColors.size();i++){
+                                        if(classesColors.get(i).equals(cell.getStringCellValue())){
+                                            colorNotExists=false;
+                                            break;
+                                        }
+                                    }
+                                if(colorNotExists){
+                                    classesColors.add(nclass,cell.getStringCellValue());
+                                }
+                                //add the arc to screen 
+                                arc.setFill(Paint.valueOf(cell.getStringCellValue()));
+                                arc.setCenterX(xp);
+                                arc.setCenterY(yp);
+                                //store the x,y and map them from screen dimensions to -1,1
+                                xp=map((float)xp,0,(float)drawPnael.getWidth(),-1,1);
+                                yp=map((float)yp,(float)drawPnael.getHeight(),0,-1,1);
+                                points.add(new Point(xp,yp,nclass,arc));
+                                drawPnael.getChildren().add(arc);
+                            }
+                        }
+                    }
+                    mainPagePane.setVisible(false);
+                    settingsPane.setVisible(true);
+                    drawPnael.setVisible(true);
+                    CategorieNumError.setVisible(false);
+                }catch(Exception e){
+                        System.out.println("file Error");
                 }
             }
-            }
-            catch(Exception e){
-                
-            }
         }
-        
+        else
+            CategorieNumError.setVisible(true);
+        System.out.println("w2:" +mainPane.getWidth() + "h2: "+mainPane.getHeight());
     }
 
     @FXML
     private void mouseClickd(MouseEvent event) {
-        Arc arc = new Arc(event.getX(),event.getY(), 5, 5, 0, 360);
-        arc.setFill(Color.web(classesColors.get(classComboBox.getValue())));
-        points.add(new Point(map((float)event.getX(),0,(float)drawPnael.getWidth(),-1,1),map((float)event.getY(),(float)drawPnael.getHeight(),0,-1,1),classComboBox.getValue(),arc));
-        drawPnael.getChildren().add(arc);
- 
+        if(!isLearn){//if still not learnd add the points to learning points array
+            Arc arc = new Arc(event.getX(),event.getY(), 5, 5, 0, 360);
+            arc.setFill(Color.web(classesColors.get(classComboBox.getValue())));
+            points.add(new Point(map((float)event.getX(),0,(float)drawPnael.getWidth(),-1,1),map((float)event.getY(),(float)drawPnael.getHeight(),0,-1,1),classComboBox.getValue(),arc));
+            drawPnael.getChildren().add(arc);
+        }
+        else{//if its learned the new points for testing
+            float xp,yp;//map the points from -1,1 to screen dimensions 
+            xp=map((float)event.getX(),0,(float)drawPnael.getWidth(),-1,1);
+            yp=map((float)event.getY(),(float)drawPnael.getHeight(),0,-1,1);
+            float []x = {xp,yp,1};
+            int tpClass= testAPoint(x);//test the point based on the stored equation for each line
+            if(tpClass>=0 && tpClass<=3){//if it has a class
+                Arc arc = new Arc(event.getX(),event.getY(), 5, 5, 0, 360);
+                arc.setFill(Color.web(classesColors.get(tpClass)));
+                arc.setStroke(Color.web(classesColors.get(tpClass)).invert());
+                arc.setStrokeWidth(2.0);
+                drawPnael.getChildren().add(arc);
+                testLabel.setText("class: "+ tpClass);
+                numOfTestPoints++;
+            }
+            else{
+                numOfTestPoints++;
+                Text t=new Text();
+                t.setText("x");
+                t.setX(event.getX());
+                t.setY(event.getY());
+                t.setStroke(Color.BROWN);
+                drawPnael.getChildren().add(t);
+                testLabel.setText("class: none");
+            }
+        }
     }
-
     private boolean numaric(String str) {//if string is num
         for(int i=0;i<str.length();i++){
             if(str.charAt(i)>'9'||str.charAt(i)<'0'){
@@ -234,7 +286,7 @@ public class FXMLClassificationMainController implements Initializable {
         }
         return true;
     }
-    private float map(float value,float  minA,float  maxA, float minB,float  maxB) {
+    private float map(float value,float  minA,float  maxA, float minB,float  maxB) {//scale data (value , minOldDataRange , maxOldDataRange , minNewDataRange , maxNewDataRange)
         return (1 - ((value - minA) / (maxA - minA))) * minB + ((value - minA) / (maxA - minA)) * maxB;
     }
 
@@ -277,17 +329,21 @@ public class FXMLClassificationMainController implements Initializable {
         else if(event.getSource()==learnButton){
              mse=0;
              minMSE=2;
-             if(!isLearn){
+             if(!isLearn)
                 splitData(30);
-             }
             try{
                 learningR=Float.parseFloat(learningRate.getText().trim());
                 if(isLearn){//to remove the lines after relearn
+                    for(int i=0;i<numOfTestPoints;i++){
+                        drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+                    }
+                    numOfTestPoints=0;
                     for(int classIndex=0; classIndex<cNum;classIndex++){
                         drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
                         if(cNum==2)
                             break;
                     }
+                    
                 }
                 for(int classIndex=0; classIndex<cNum;classIndex++){//start learning class by class
                     mse=0;
@@ -305,9 +361,7 @@ public class FXMLClassificationMainController implements Initializable {
             }catch(NumberFormatException e){
                 //not float Error
             }
-            
          }
-         
          else if(event.getSource()==UndoButton){
              if(!points.isEmpty() && !isLearn){
              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
@@ -315,64 +369,49 @@ public class FXMLClassificationMainController implements Initializable {
              }
          }
          else if(event.getSource()==saveButton){
-             if(isLearn){
-             FileInputStream fis = null;
+             
             try {
-                File file = new File("C:\\Users\\hp\\Desktop\\ai project\\ClassificationAI\\src\\classificationai\\points.xlsx");   //creating a new file instance  
-                
-                fis = new FileInputStream(file); //obtaining bytes from the file
-                //creating Workbook instance that refers to .xlsx file
-                XSSFWorkbook wb = new XSSFWorkbook(fis);
-                wb.removeSheetAt(0);
-                wb.createSheet();
-                XSSFSheet sheet = wb.getSheetAt(0);
-                
-                Map<String, Object[]> data = new HashMap<String, Object[]>();
+                XSSFWorkbook workbook = new XSSFWorkbook();
+                workbook.createSheet("data");
+                XSSFSheet sheet = workbook.getSheetAt(0);
+                int ipoints=0;
                 for(int i=0;i<points.size();i++){
-                    data.put(""+i, new Object[] {points.get(i).x,points.get(i).y,points.get(i).classNum,points.get(i).arc.getFill().toString()});                    
+                    XSSFRow row = sheet.createRow((short)i); 
+                    ipoints=i;
+                    float x,y;
+                    x=map(points.get(i).x,-1,1,0,(float)drawPnael.getWidth());
+                    y=map(points.get(i).y,-1,1,(float)drawPnael.getHeight(),0);
+                    row.createCell(0).setCellValue(x);  
+                    row.createCell(1).setCellValue(y);  
+                    row.createCell(2).setCellValue(points.get(i).classNum);  
+                    row.createCell(3).setCellValue(points.get(i).arc.getFill().toString());  
                 }
                 for(int i=0;i<tPoints.size();i++){
-                    data.put("2"+i, new Object[] {tPoints.get(i).x,tPoints.get(i).y,tPoints.get(i).classNum,tPoints.get(i).arc.getFill().toString()});
-                    System.out.println(tPoints.get(i).arc.getFill().toString());
+                    XSSFRow row = sheet.createRow((short)ipoints+1+i); 
+                    float x,y;
+                    x=map(tPoints.get(i).x,-1,1,0,(float)drawPnael.getWidth());
+                    y=map(tPoints.get(i).y,-1,1,(float)drawPnael.getHeight(),0);
+                    row.createCell(0).setCellValue(x);  
+                    row.createCell(1).setCellValue(y);  
+                    row.createCell(2).setCellValue(tPoints.get(i).classNum);  
+                    row.createCell(3).setCellValue(tPoints.get(i).arc.getFill().toString());  
                 }
-                Set<String> newRows = data.keySet(); // get the last row number to append new data 
-                int rownum = 0;
-                for (String key : newRows) { // Creating a new Row in existing XLSX sheet
-                    Row row1 = sheet.createRow(rownum++);
-                    Object [] objArr = data.get(key);
-                    int cellnum = 0;
-                    for (Object obj : objArr) {
-                        Cell cell = row1.createCell(cellnum++);
-                        if (obj instanceof String) {
-                            cell.setCellValue((String) obj);
-                        } 
-                        else if (obj instanceof Float) {
-                            cell.setCellValue((Float) obj); }
-                        else if (obj instanceof Integer) {
-                            cell.setCellValue((Integer) obj); }
-                    } 
-                } // open an OutputStream to save written data into XLSX file 
-                FileOutputStream os = new FileOutputStream(file);
-                wb.write(os);
+                LocalDateTime DTNow = LocalDateTime.now();
+                String formattedDate = DTNow.format(DateTimeFormatter.ofPattern("yyyy-MM-dd hh-mm-ss"));
+                FileOutputStream fileOut = new FileOutputStream("src\\classificationai\\savedExcel\\points "+formattedDate+ " ("+cNum+")"+".xlsx");  
+                workbook.write(fileOut);  
+                fileOut.close();  
+                //closing the workbook  
+                workbook.close();  
                 System.out.println("Writing on XLSX file Finished ...");
             } catch (Exception ex) {
                 Logger.getLogger(FXMLClassificationMainController.class.getName()).log(Level.SEVERE, null, ex);
-            } finally {
-                try {
-                    fis.close();
-                } catch (IOException ex) {
-                    Logger.getLogger(FXMLClassificationMainController.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-         }
+            } 
+         
          }
     }
 
     private void learn(int classIndex,Preceptron prec) {
-        
-        System.out.println("--------------------------------------------------------------------------------------------------");
-        System.out.println("mse: "+prec.mse);
-        System.out.println("--------------------------------------------------------------------------------------------------");
         for(int epic=0; (epic< Integer.parseInt(epicNum.getText().trim()));epic++){//loop in epic
             for(int pointI = 0 ;pointI <points.size();pointI++){//loop in points
                 float []inputs={points.get(pointI).x,points.get(pointI).y,points.get(pointI).bias};
@@ -386,11 +425,9 @@ public class FXMLClassificationMainController implements Initializable {
                 prec.mse=0;
             }
         }
-        System.out.println(prec.iteration);
     }
 
     private void drowLine(int classIndex,Preceptron prec) {
-        
         if(!mseCheckBox.isSelected()){
             float x1L2= map(0,0,(float)drawPnael.getWidth(),-1,1);
             float y1L2= map(prec.findLine(x1L2),-1,1,(float)drawPnael.getHeight(),0);
@@ -399,29 +436,22 @@ public class FXMLClassificationMainController implements Initializable {
             line2=new Line(0,y1L2,drawPnael.getWidth(),y2L2);
             line2.setStroke(Color.web(classesColors.get(classIndex)));
             drawPnael.getChildren().add(line2);
-            System.out.println("y0L2 = " +y1L2+"  y1L2 = " + y2L2);    
+            for(int i=0;i<3;i++){
+               finalLineY[classIndex][i]= prec.w[i];
+            }
         }
         else if(mseCheckBox.isSelected()){
-            mseLabel.setText("Mse= "+String.valueOf(minMSE));
-            System.out.println(minMSE+"+++++++++++++++++++++++++++");
-            prec.w[0]=bestW[0];
-            prec.w[1]=bestW[1];
-            prec.w[2]= bestW[2];
-            System.out.println("Best w0= "+String.valueOf(prec.w[0]));
-            System.out.println("Best w1= "+String.valueOf(prec.w[1]));
-            System.out.println("Best w2= "+String.valueOf(prec.w[2]));
+            for(int i=0;i<3;i++){
+               prec.w[i]=bestW[i]; 
+               finalLineY[classIndex][i]= prec.w[i];
+            }
             float x1= map(0,0,(float)drawPnael.getWidth(),-1,1);
-            System.out.println(x1);
-            System.out.println(prec.findLine(x1));
             float y1= map(prec.findLine(x1),-1,1,(float)drawPnael.getHeight(),0);
             float x2= map((float)drawPnael.getWidth(),0,(float)drawPnael.getWidth(),-1,1);
-            System.out.println(x2);
-            System.out.println(prec.findLine(x2));
             float y2= map(prec.findLine(x2),-1,1,(float)drawPnael.getHeight(),0);
             line=new Line(0,y1,drawPnael.getWidth(),y2);
             line.setStroke(Color.web(classesColors.get(classIndex)));
             drawPnael.getChildren().add(line);
-            System.out.println("y0 = " +y1+"  y1 = " + y2);
         }
     }
 
@@ -431,29 +461,33 @@ public class FXMLClassificationMainController implements Initializable {
             float []inputs={tPoints.get(pointI).x,tPoints.get(pointI).y,tPoints.get(pointI).bias};
             if(tPoints.get(pointI).classNum==classIndex){
                 prec.test(inputs, 1);
-                //System.out.println(pointI+"-result: "+prec.test(inputs, 1)+" class: "+tPoints.get(pointI).classNum );
             }
             else {
                 prec.test(inputs, -1);
-                //System.out.println(pointI+"-Not result: "+prec.test(inputs, -1)+" class: "+tPoints.get(pointI).classNum );
             }
         }
         
         mse= 1/(float)tPoints.size() * (prec.mse);
         if(minMSE>mse){
-            System.out.println("prec MES: "+prec.mse);
-            System.out.println("Best MES: "+mse);
-            System.out.println("=======");
             minMSE=mse;
             bestW[0]=prec.w[0];
             bestW[1]=prec.w[1];
             bestW[2]=prec.w[2];
-            System.out.println("Best w0= "+bestW[0]);
-            System.out.println("Best w1= "+bestW[1]);
-            System.out.println("Best w2= "+bestW[2]);
         }
         prec.mse=0;
         
+    }
+
+    private int testAPoint(float []x) {
+        for(int i=0 ; i<cNum ; i++){
+            float sum=0;
+            for(int w=0;w<3;w++){
+                sum+=finalLineY[i][w]*x[w];
+            }
+            if(sum >=0)
+                return i;
+        }
+        return -1;
     }
 }
 

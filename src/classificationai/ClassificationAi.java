@@ -39,6 +39,7 @@ public class ClassificationAi extends Application{
         stage.setTitle("Classification Problem");
         stage.setScene(scene);
         stage.show();
+        System.out.println("w1:" +stage.getWidth() + "h1: "+stage.getHeight());
        //hello
     }
     
