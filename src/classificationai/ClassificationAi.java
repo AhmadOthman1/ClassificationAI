@@ -32,6 +32,8 @@ public class ClassificationAi extends Application{
         Scene scene = new Scene(root);
         stage.setMinWidth(1200);
         stage.setMinHeight(640);
+        stage.setHeight(640);
+        stage.setWidth(1200);
         stage.setMaxWidth(1200);
         stage.setMaxHeight(640);
         stage.setTitle("Classification Problem");
