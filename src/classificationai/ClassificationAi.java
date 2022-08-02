@@ -30,16 +30,15 @@ public class ClassificationAi extends Application{
         Parent root = FXMLLoader.load(getClass().getResource("FXMLClassificationMain.fxml"));
         //stage.initStyle(StageStyle.UNDECORATED);
         Scene scene = new Scene(root);
-        stage.setMinWidth(1200);
-        stage.setMinHeight(640);
-        stage.setHeight(640);
-        stage.setWidth(1200);
-        stage.setMaxWidth(1200);
-        stage.setMaxHeight(640);
+        stage.setMinWidth(1214);
+        stage.setMinHeight(678);
+        stage.setHeight(678);
+        stage.setWidth(1214);
+        stage.setMaxWidth(1214);
+        stage.setMaxHeight(678);
         stage.setTitle("Classification Problem");
         stage.setScene(scene);
         stage.show();
-        System.out.println("w1:" +stage.getWidth() + "h1: "+stage.getHeight());
        //hello
     }
     

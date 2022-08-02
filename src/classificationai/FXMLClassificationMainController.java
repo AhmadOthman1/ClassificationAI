@@ -118,8 +118,6 @@ public class FXMLClassificationMainController implements Initializable {
     @FXML
     private Label CategorieNumError;
     @FXML
-    private Label mseLabel;
-    @FXML
     private CheckBox mseCheckBox;
     private TextField minMSETF;
     @FXML
@@ -240,7 +238,6 @@ public class FXMLClassificationMainController implements Initializable {
         }
         else
             CategorieNumError.setVisible(true);
-        System.out.println("w2:" +mainPane.getWidth() + "h2: "+mainPane.getHeight());
     }
 
     @FXML
@@ -420,10 +417,10 @@ public class FXMLClassificationMainController implements Initializable {
                 else 
                     prec.train(inputs, -1);
             }
-            if(mseCheckBox.isSelected()){//if MSE checkBox selected test the data
+           
                 test(classIndex,prec);
                 prec.mse=0;
-            }
+            
         }
     }
 
@@ -466,13 +463,14 @@ public class FXMLClassificationMainController implements Initializable {
                 prec.test(inputs, -1);
             }
         }
-        
-        mse= 1/(float)tPoints.size() * (prec.mse);
-        if(minMSE>mse){
-            minMSE=mse;
-            bestW[0]=prec.w[0];
-            bestW[1]=prec.w[1];
-            bestW[2]=prec.w[2];
+        if(mseCheckBox.isSelected()){//if MSE checkBox selected test the data
+            mse= 1/(float)tPoints.size() * (prec.mse);
+            if(minMSE>mse){
+                minMSE=mse;
+                bestW[0]=prec.w[0];
+                bestW[1]=prec.w[1];
+                bestW[2]=prec.w[2];
+            }
         }
         prec.mse=0;
         
