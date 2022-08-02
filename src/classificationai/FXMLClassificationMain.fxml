@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane id="backgroundPane" prefHeight="640.0" prefWidth="1200.0" style="-fx-background-color: #042A2B;" stylesheets="@Css/main.css" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="classificationai.FXMLClassificationMainController">
+<AnchorPane id="backgroundPane" prefHeight="640.0" prefWidth="1200.0" style="-fx-background-color: #042A2B;" stylesheets="@Css/main.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="classificationai.FXMLClassificationMainController">
    <children>
       <AnchorPane id="pane" fx:id="mainPagePane" layoutX="200.0" layoutY="87.0" prefHeight="500.0" prefWidth="800.0" AnchorPane.bottomAnchor="70.0" AnchorPane.leftAnchor="200.0" AnchorPane.rightAnchor="200.0" AnchorPane.topAnchor="70.0">
          <children>
@@ -29,7 +29,7 @@
             </Button>
             <TextField id="textField" fx:id="CategorieNum" layoutX="318.0" layoutY="239.0" prefHeight="48.0" prefWidth="330.0" promptText="1, 2, ...n" />
             <Label fx:id="CategorieNumError" layoutX="318.0" layoutY="287.0" text="*Error: Please Enter a valid number (2-4)" textFill="RED" visible="false" />
-            <Button id="Tbutton" fx:id="startButton1" layoutX="442.0" layoutY="321.0" mnemonicParsing="false" onAction="#actionButton" prefHeight="38.0" prefWidth="306.0" text="Open from Excel" textFill="WHITE" AnchorPane.rightAnchor="51.60000000000002" AnchorPane.topAnchor="350.0">
+            <Button id="Tbutton" fx:id="openExcleButton" layoutX="442.0" layoutY="321.0" mnemonicParsing="false" onAction="#actionButton" prefHeight="38.0" prefWidth="306.0" text="Open from Excel" textFill="WHITE" AnchorPane.rightAnchor="51.60000000000002" AnchorPane.topAnchor="350.0">
                <font>
                   <Font size="20.0" />
                </font>

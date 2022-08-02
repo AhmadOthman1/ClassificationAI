@@ -7,11 +7,19 @@ package classificationai;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.animation.KeyFrame;
@@ -33,6 +41,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Line;
@@ -44,6 +53,11 @@ import javafx.stage.FileChooser;
 import javafx.util.Duration;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import static org.apache.poi.hssf.usermodel.HeaderFooter.file;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 /**
  * FXML Controller class
@@ -106,9 +120,9 @@ public class FXMLClassificationMainController implements Initializable {
     private CheckBox mseCheckBox;
     private TextField minMSETF;
     @FXML
-    private Button startButton1;
-    @FXML
     private Button saveButton;
+    @FXML
+    private Button openExcleButton;
       
     /**
      * Initializes the controller class.
@@ -118,7 +132,7 @@ public class FXMLClassificationMainController implements Initializable {
         drawPnael.getChildren().add(t);
         epicNum.setText("5");
         learningRate.setText("0.002");
-        minMSETF.setText("0.02");
+      //  minMSETF.setText("0.02");
         // TODO        
         
         bestW=new float[3];
@@ -150,7 +164,56 @@ public class FXMLClassificationMainController implements Initializable {
             else
                 CategorieNumError.setVisible(true);
         }
-        
+        else if(event.getSource()==openExcleButton){
+                mainPagePane.setVisible(false);
+                settingsPane.setVisible(true);
+                drawPnael.setVisible(true);
+                CategorieNumError.setVisible(false);
+                drawPnael.getChildren().clear();
+                points.clear();
+                tPoints.clear();
+                isLearn=false;
+                isTest=false;
+                mse=0;
+                minMSE=2;
+            try{
+                File file = new File("C:\\Users\\hp\\Desktop\\ai project\\ClassificationAI\\src\\classificationai\\points.xlsx");   //creating a new file instance  
+                FileInputStream fis = new FileInputStream(file);   //obtaining bytes from the file  
+                //creating Workbook instance that refers to .xlsx file  
+                XSSFWorkbook wb = new XSSFWorkbook(fis);   
+                XSSFSheet sheet = wb.getSheetAt(0);     //creating a Sheet object to retrieve object  
+                Iterator<Row> itr = sheet.iterator();    //iterating over excel file  
+                while (itr.hasNext())                 
+                {  
+                Row row = itr.next();  
+                Iterator<Cell> cellIterator = row.cellIterator();   //iterating over each column  
+               Arc arc=new Arc(0,0, 5, 5, 0, 360);
+                while (cellIterator.hasNext())   
+                {  
+                Cell cell = cellIterator.next(); 
+                int nclass;
+                float xp,yp,y2;
+                       xp= (float)cell.getNumericCellValue();
+                       cell = cellIterator.next(); 
+                       yp= (float)cell.getNumericCellValue();
+                       cell = cellIterator.next(); 
+                       nclass=(int)cell.getNumericCellValue();
+                       cell = cellIterator.next(); 
+                       arc.setFill(Paint.valueOf(cell.getStringCellValue()));
+                       y2= map(xp,-1,1,(float)drawPnael.getWidth(),0); 
+                        
+                       arc.setCenterX(y2);
+                       y2= map(yp,-1,1,(float)drawPnael.getHeight(),0); 
+                       arc.setCenterY(y2);
+                       points.add(new Point(xp,yp,nclass,arc));
+                       drawPnael.getChildren().add(arc);
+                }
+            }
+            }
+            catch(Exception e){
+                
+            }
+        }
         
     }
 
@@ -250,6 +313,58 @@ public class FXMLClassificationMainController implements Initializable {
              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
              points.remove(points.size()-1);
              }
+         }
+         else if(event.getSource()==saveButton){
+             if(isLearn){
+             FileInputStream fis = null;
+            try {
+                File file = new File("C:\\Users\\hp\\Desktop\\ai project\\ClassificationAI\\src\\classificationai\\points.xlsx");   //creating a new file instance  
+                
+                fis = new FileInputStream(file); //obtaining bytes from the file
+                //creating Workbook instance that refers to .xlsx file
+                XSSFWorkbook wb = new XSSFWorkbook(fis);
+                wb.removeSheetAt(0);
+                wb.createSheet();
+                XSSFSheet sheet = wb.getSheetAt(0);
+                
+                Map<String, Object[]> data = new HashMap<String, Object[]>();
+                for(int i=0;i<points.size();i++){
+                    data.put(""+i, new Object[] {points.get(i).x,points.get(i).y,points.get(i).classNum,points.get(i).arc.getFill().toString()});                    
+                }
+                for(int i=0;i<tPoints.size();i++){
+                    data.put("2"+i, new Object[] {tPoints.get(i).x,tPoints.get(i).y,tPoints.get(i).classNum,tPoints.get(i).arc.getFill().toString()});
+                    System.out.println(tPoints.get(i).arc.getFill().toString());
+                }
+                Set<String> newRows = data.keySet(); // get the last row number to append new data 
+                int rownum = 0;
+                for (String key : newRows) { // Creating a new Row in existing XLSX sheet
+                    Row row1 = sheet.createRow(rownum++);
+                    Object [] objArr = data.get(key);
+                    int cellnum = 0;
+                    for (Object obj : objArr) {
+                        Cell cell = row1.createCell(cellnum++);
+                        if (obj instanceof String) {
+                            cell.setCellValue((String) obj);
+                        } 
+                        else if (obj instanceof Float) {
+                            cell.setCellValue((Float) obj); }
+                        else if (obj instanceof Integer) {
+                            cell.setCellValue((Integer) obj); }
+                    } 
+                } // open an OutputStream to save written data into XLSX file 
+                FileOutputStream os = new FileOutputStream(file);
+                wb.write(os);
+                System.out.println("Writing on XLSX file Finished ...");
+            } catch (Exception ex) {
+                Logger.getLogger(FXMLClassificationMainController.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    fis.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(FXMLClassificationMainController.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+         }
          }
     }
 
