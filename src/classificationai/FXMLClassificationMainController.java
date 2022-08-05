@@ -5,58 +5,34 @@
  */
 package classificationai;
 
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Random;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.collections.FXCollections;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
-import javafx.scene.shape.ArcType;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Polygon;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
-import javafx.util.Duration;
-import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
-import org.apache.poi.hssf.usermodel.HSSFRow;
-import static org.apache.poi.hssf.usermodel.HeaderFooter.file;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -69,23 +45,27 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  * @author HI-TECH
  */
 public class FXMLClassificationMainController implements Initializable {
-    ArrayList <Point> tPoints=new ArrayList(); 
-    ArrayList <Point> points=new ArrayList();
-    boolean isLearn=false;
-    boolean isTest=false;
-    Line line=new Line();
-    Line line2=new Line();
+    boolean isLearn=false;//is the model learned
+    boolean stopLearningFlag;// stop learinig if we reached the desired MES
+    int cNum;// classes number (2 - 4)
+    int numOfTestPoints;//number of testing points added by user after training ends
+    int epicNumber;// input number of epics
+    int testingDataPNumber;//persantage of testing points from all points to split
+    float []bestW;//best waight after testing in every epic
+    float [][]finalLineY;// final equations after trainig and testing
     float mse=0;
-    
-    int cNum;
-    ArrayList <String> classesColors =new ArrayList(); 
-    float learningR; 
+    float minMSE=2;// min mse for all epics
+    float learningR; //learning rate
+    float maxErrorNumber;
+    String errorType;//for catching Errors
     Preceptron prec;
-    float []bestW;
-    float minMSE=2;
-    String cnumb="";
-    float [][]finalLineY;
-    int numOfTestPoints;
+    Line line=new Line();
+    ArrayList <Point> tPoints=new ArrayList(); // testing points arraylist
+    ArrayList <Point> points=new ArrayList();//training points arraylist
+    ArrayList <String> classesColors =new ArrayList(); // array lest of point classes colors
+    
+    
+    
     
     @FXML
     private AnchorPane mainPagePane;
@@ -126,6 +106,20 @@ public class FXMLClassificationMainController implements Initializable {
     private Button openExcleButton;
     @FXML
     private AnchorPane mainPane;
+    @FXML
+    private TextField testingDataPNum;
+    @FXML
+    private TextField maxError;
+    @FXML
+    private Label MEErrorLabel;
+    @FXML
+    private Label LRErrorLabel;
+    @FXML
+    private Label NOEErrorLabel;
+    @FXML
+    private Label TDErrorLabel;
+    @FXML
+    private Label settingErrorLabel;
       
     /**
      * Initializes the controller class.
@@ -134,7 +128,7 @@ public class FXMLClassificationMainController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         epicNum.setText("10");
         learningRate.setText("0.2");
-
+        errorType="";
       //  minMSETF.setText("0.02");
         // TODO        
         
@@ -155,7 +149,6 @@ public class FXMLClassificationMainController implements Initializable {
             points.clear();
             tPoints.clear();
             isLearn=false;
-            isTest=false;
             mse=0;
             minMSE=2;
             classesColors.clear();
@@ -263,7 +256,7 @@ public class FXMLClassificationMainController implements Initializable {
                 testLabel.setText("class: "+ tpClass);
                 numOfTestPoints++;
             }
-            else{
+            else{//its unknown class
                 numOfTestPoints++;
                 Text t=new Text();
                 t.setText("x");
@@ -275,28 +268,7 @@ public class FXMLClassificationMainController implements Initializable {
             }
         }
     }
-    private boolean numaric(String str) {//if string is num
-        for(int i=0;i<str.length();i++){
-            if(str.charAt(i)>'9'||str.charAt(i)<'0'){
-                return false;
-            }
-        }
-        return true;
-    }
-    private float map(float value,float  minA,float  maxA, float minB,float  maxB) {//scale data (value , minOldDataRange , maxOldDataRange , minNewDataRange , maxNewDataRange)
-        return (1 - ((value - minA) / (maxA - minA))) * minB + ((value - minA) / (maxA - minA)) * maxB;
-    }
-
-    private void splitData(float p) {
-        int testingDataSize=  (int) (points.size()*p/100);
-        for(int i=0;i<testingDataSize;i++){
-              int tIndex= new Random().nextInt(points.size()-1);
-              tPoints.add(points.get(tIndex));
-              tPoints.get(i).arc.setStroke(Color.RED);
-              points.remove(tIndex);
-        }
-        System.out.println(tPoints.size());
-    }
+    
 
     @FXML
     private void settingsButtonAction(ActionEvent event) {
@@ -305,7 +277,6 @@ public class FXMLClassificationMainController implements Initializable {
             points.clear();
             tPoints.clear();
             isLearn=false;
-            isTest=false;
             mse=0;
             minMSE=2;
         }
@@ -316,57 +287,19 @@ public class FXMLClassificationMainController implements Initializable {
             mse=0;
             minMSE=2;
             isLearn=false;
-            isTest=false;
             classComboBox.getItems().clear();
             drawPnael.setVisible(false);
             settingsPane.setVisible(false);
             mainPagePane.setVisible(true);
             
         }
-        else if(event.getSource()==learnButton){
-             mse=0;
-             minMSE=2;
-             if(!isLearn)
-                splitData(30);
-            try{
-                learningR=Float.parseFloat(learningRate.getText().trim());
-                if(isLearn){//to remove the lines after relearn
-                    for(int i=0;i<numOfTestPoints;i++){
-                        drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
-                    }
-                    numOfTestPoints=0;
-                    for(int classIndex=0; classIndex<cNum;classIndex++){
-                        drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
-                        if(cNum==2)
-                            break;
-                    }
-                    
-                }
-                for(int classIndex=0; classIndex<cNum;classIndex++){//start learning class by class
-                    mse=0;
-                    minMSE=2;
-                    prec = new Preceptron(learningR);//create preceptron
-                    learn(classIndex,prec);
-                    drowLine(classIndex,prec);
-                    System.out.println(cnumb);
-                    
-                    if(cNum==2)// to not drow two lines when its binary
-                        break;
-                }
-                isLearn=true;
-                
-            }catch(NumberFormatException e){
-                //not float Error
-            }
-         }
          else if(event.getSource()==UndoButton){
              if(!points.isEmpty() && !isLearn){
              drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
              points.remove(points.size()-1);
              }
          }
-         else if(event.getSource()==saveButton){
-             
+         else if(event.getSource()==saveButton){//save to Excel File 
             try {
                 XSSFWorkbook workbook = new XSSFWorkbook();
                 workbook.createSheet("data");
@@ -407,37 +340,119 @@ public class FXMLClassificationMainController implements Initializable {
          
          }
     }
+    @FXML
+    private void learnButtonAction(ActionEvent event) {
+        if(event.getSource()==learnButton){
+            testLabel.setText("");
+            errorType="";//Error String to catch spacific Errors
+            stopLearningFlag=false;
+            try{
+                settingErrorLabel.setVisible(false);
+                learningR=Float.parseFloat(learningRate.getText().trim());
+                epicNumber=Integer.parseInt(epicNum.getText().trim());
+                testingDataPNumber=Integer.parseInt(testingDataPNum.getText().trim());
+                if (mseCheckBox.isSelected()) maxErrorNumber =Float.parseFloat(maxError.getText().trim()) ;
+                if (mseCheckBox.isSelected() && (maxErrorNumber<0 || maxErrorNumber>1)) {
+                    errorType="maxErrorNumber";
+                    throw new NullPointerException();
+                }
+                 mse=0;
+                 minMSE=2;
 
-    private void learn(int classIndex,Preceptron prec) {
-        for(int epic=0; (epic< Integer.parseInt(epicNum.getText().trim()));epic++){//loop in epic
-            for(int pointI = 0 ;pointI <points.size();pointI++){//loop in points
-                float []inputs={points.get(pointI).x,points.get(pointI).y,points.get(pointI).bias};
-                if(points.get(pointI).classNum==classIndex)
-                    prec.train(inputs, 1);// if the point in the class send it with Yexpected=1
-                else 
-                    prec.train(inputs, -1);
+                if(!isLearn)//split data for one time 
+                    if( testingDataPNumber>=0 && testingDataPNumber<=100){
+                        TDErrorLabel.setVisible(false);
+                        splitData(testingDataPNumber);
+                    }
+                    else{
+                        errorType="testingDataPNumber";
+                        throw new NullPointerException();
+                    }
+                if(isLearn){
+                    for(int i=0;i<numOfTestPoints;i++){//to remove the test Points after relearn
+                        drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+                    }
+                    numOfTestPoints=0;
+                    for(int classIndex=0; classIndex<cNum;classIndex++){//to remove the lines after relearn
+                        drawPnael.getChildren().remove(drawPnael.getChildren().size()-1);
+                        if(cNum==2)
+                            break;
+                    }
+
+                }
+                //check for correct inputs
+                LRErrorLabel.setVisible(false);
+                NOEErrorLabel.setVisible(false);
+                if(learningR <=0 || learningR >1){
+                    errorType="learningR";
+                    throw new NullPointerException();
+                }
+                if(epicNumber<1){
+                    errorType="epicNumber";
+                    throw new NullPointerException();
+                }
+                for(int classIndex=0; classIndex<cNum;classIndex++){//start learning class by class
+                    mse=0;
+                    minMSE=2;
+                    stopLearningFlag=false;
+                    prec = new Preceptron(learningR);//create preceptron
+                    learn(classIndex,prec);
+                    drowLine(classIndex,prec);
+                    if(cNum==2)// to not drow two lines when its binary
+                        break;
+                }
+                isLearn=true;
+
+            }catch(NumberFormatException e){
+                settingErrorLabel.setVisible(true);
+            }catch(NullPointerException e){
+                if(errorType.equals("testingDataPNumber"))
+                    TDErrorLabel.setVisible(true);
+                else if(errorType.equals("learningR"))
+                    LRErrorLabel.setVisible(true);
+                else if(errorType.equals("epicNumber"))
+                    NOEErrorLabel.setVisible(true);
+                else if(errorType.equals("maxErrorNumber"))
+                    MEErrorLabel.setVisible(true);
             }
-           
-                test(classIndex,prec);
-                prec.mse=0;
+            
+         }
+    }
+    private void learn(int classIndex,Preceptron prec) {
+        try{
+            for(int epic=0; (epic< epicNumber);epic++){//loop in epic
+                for(int pointI = 0 ;pointI <points.size();pointI++){//loop in points
+                    float []inputs={points.get(pointI).x,points.get(pointI).y,points.get(pointI).bias};
+                    if(points.get(pointI).classNum==classIndex)
+                        prec.train(inputs, 1);// if the point in the class send it with Yexpected=1
+                    else 
+                        prec.train(inputs, -1);
+                }
+
+                    test(classIndex,prec);//after every Epic test the splited data
+                    prec.mse=0;
+                    if(stopLearningFlag)
+                        break;
+            }
+        }catch(Exception e){
             
         }
     }
 
     private void drowLine(int classIndex,Preceptron prec) {
-        if(!mseCheckBox.isSelected()){
+        if(!mseCheckBox.isSelected()){//drow line based on final epic waights
             float x1L2= map(0,0,(float)drawPnael.getWidth(),-1,1);
             float y1L2= map(prec.findLine(x1L2),-1,1,(float)drawPnael.getHeight(),0);
             float x2L2= map((float)drawPnael.getWidth(),0,(float)drawPnael.getWidth(),-1,1);
             float y2L2= map(prec.findLine(x2L2),-1,1,(float)drawPnael.getHeight(),0);
-            line2=new Line(0,y1L2,drawPnael.getWidth(),y2L2);
-            line2.setStroke(Color.web(classesColors.get(classIndex)));
-            drawPnael.getChildren().add(line2);
+            line=new Line(0,y1L2,drawPnael.getWidth(),y2L2);
+            line.setStroke(Color.web(classesColors.get(classIndex)));
+            drawPnael.getChildren().add(line);
             for(int i=0;i<3;i++){
                finalLineY[classIndex][i]= prec.w[i];
             }
         }
-        else if(mseCheckBox.isSelected()){
+        else if(mseCheckBox.isSelected()){//drow line based on best Error epic waights
             for(int i=0;i<3;i++){
                prec.w[i]=bestW[i]; 
                finalLineY[classIndex][i]= prec.w[i];
@@ -453,7 +468,6 @@ public class FXMLClassificationMainController implements Initializable {
     }
 
     private void test(int classIndex,Preceptron prec) {
-        
         for(int pointI = 0 ;pointI <tPoints.size();pointI++){//loop on the testing points
             float []inputs={tPoints.get(pointI).x,tPoints.get(pointI).y,tPoints.get(pointI).bias};
             if(tPoints.get(pointI).classNum==classIndex){
@@ -465,7 +479,14 @@ public class FXMLClassificationMainController implements Initializable {
         }
         if(mseCheckBox.isSelected()){//if MSE checkBox selected test the data
             mse= 1/(float)tPoints.size() * (prec.mse);
-            if(minMSE>mse){
+            if(mse<=maxErrorNumber){
+                bestW[0]=prec.w[0];
+                bestW[1]=prec.w[1];
+                bestW[2]=prec.w[2];
+                stopLearningFlag=true;
+            }
+            else if(minMSE>mse){
+                System.out.println(mse);
                 minMSE=mse;
                 bestW[0]=prec.w[0];
                 bestW[1]=prec.w[1];
@@ -487,5 +508,35 @@ public class FXMLClassificationMainController implements Initializable {
         }
         return -1;
     }
+
+    @FXML
+    private void checkBoxAction(ActionEvent event) {
+        if(event.getSource()==mseCheckBox){
+                maxError.setDisable(!mseCheckBox.isSelected());
+        }
+    }
+    private boolean numaric(String str) {//if string is num
+        for(int i=0;i<str.length();i++){
+            if(str.charAt(i)>'9'||str.charAt(i)<'0'){
+                return false;
+            }
+        }
+        return true;
+    }
+    private float map(float value,float  minA,float  maxA, float minB,float  maxB) {//scale data (value , minOldDataRange , maxOldDataRange , minNewDataRange , maxNewDataRange)
+        return (1 - ((value - minA) / (maxA - minA))) * minB + ((value - minA) / (maxA - minA)) * maxB;
+    }
+
+    private void splitData(float p) {//split data to training and testing
+        int testingDataSize=  (int) (points.size()*p/100);
+        for(int i=0;i<testingDataSize;i++){
+              int tIndex= new Random().nextInt(points.size()-1);
+              tPoints.add(points.get(tIndex));
+              tPoints.get(i).arc.setStroke(Color.RED);
+              points.remove(tIndex);
+        }
+        System.out.println(tPoints.size());
+    }
+    
 }
 
