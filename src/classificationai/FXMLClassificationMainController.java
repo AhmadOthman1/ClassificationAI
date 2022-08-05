@@ -8,6 +8,7 @@ package classificationai;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -19,7 +20,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -33,6 +38,7 @@ import javafx.scene.shape.Arc;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -53,6 +59,7 @@ public class FXMLClassificationMainController implements Initializable {
     int testingDataPNumber;//persantage of testing points from all points to split
     float []bestW;//best waight after testing in every epic
     float [][]finalLineY;// final equations after trainig and testing
+    int [][]ConfusionMatrix;
     float mse=0;
     float minMSE=2;// min mse for all epics
     float learningR; //learning rate
@@ -140,7 +147,6 @@ public class FXMLClassificationMainController implements Initializable {
         //if CategorieNum is a number
         if(!CategorieNum.getText().trim().equals("")     &&      numaric(CategorieNum.getText().trim())     &&      Integer.parseInt(CategorieNum.getText().trim())>1   &&      Integer.parseInt(CategorieNum.getText().trim())<5){
             cNum=Integer.parseInt(CategorieNum.getText().trim());//num of classes
-            finalLineY=new float[cNum][3];
             for(int i=0;i<cNum;i++)
                 classComboBox.getItems().add(i);//add classes to the combo box
             classComboBox.getSelectionModel().select(0);//select firs element as defult
@@ -346,6 +352,8 @@ public class FXMLClassificationMainController implements Initializable {
             testLabel.setText("");
             errorType="";//Error String to catch spacific Errors
             stopLearningFlag=false;
+            ConfusionMatrix=new int [cNum][cNum];
+            finalLineY=new float[cNum][3];
             try{
                 settingErrorLabel.setVisible(false);
                 learningR=Float.parseFloat(learningRate.getText().trim());
@@ -402,7 +410,16 @@ public class FXMLClassificationMainController implements Initializable {
                         break;
                 }
                 isLearn=true;
-
+                fillConfusionMatrix();
+                System.out.println(" \t0\t1");
+                for(int i=0 ; i<cNum;i++){
+                    System.out.print("{{"+i+"}}");
+                    for(int j=0 ; j<cNum;j++){
+                        System.out.print("\t"+ConfusionMatrix[i][j]+"\t");
+                    }
+                    System.out.println("");
+                }
+                
             }catch(NumberFormatException e){
                 settingErrorLabel.setVisible(true);
             }catch(NullPointerException e){
@@ -497,7 +514,7 @@ public class FXMLClassificationMainController implements Initializable {
         
     }
 
-    private int testAPoint(float []x) {
+    private int testAPoint(float []x) {//test a point in which class based on final equations after learning and testing
         for(int i=0 ; i<cNum ; i++){
             float sum=0;
             for(int w=0;w<3;w++){
@@ -508,10 +525,20 @@ public class FXMLClassificationMainController implements Initializable {
         }
         return -1;
     }
-
+    private void fillConfusionMatrix() {
+        for(int pClass=0; pClass < cNum;pClass++){
+            for(int conMatrix=0 ; conMatrix<tPoints.size();conMatrix++){
+                if(tPoints.get(conMatrix).classNum==pClass){
+                    float []point= {tPoints.get(conMatrix).x,tPoints.get(conMatrix).y,1};
+                    ConfusionMatrix[pClass][testAPoint(point)]++;
+                }
+            }
+        }
+        ShowConfusionMatrix();
+    }
     @FXML
     private void checkBoxAction(ActionEvent event) {
-        if(event.getSource()==mseCheckBox){
+        if(event.getSource()==mseCheckBox){//   Disable/Enable maxError TextField
                 maxError.setDisable(!mseCheckBox.isSelected());
         }
     }
@@ -537,6 +564,22 @@ public class FXMLClassificationMainController implements Initializable {
         }
         System.out.println(tPoints.size());
     }
+
+    private void ShowConfusionMatrix() {
+         Parent root;
+        try {
+            root = FXMLLoader.load(getClass().getClassLoader().getResource("path/to/other/view.fxml"));
+            Stage stage = new Stage();
+            stage.setTitle("Confusion Matrix");
+            stage.setScene(new Scene(root, 450, 450));
+            stage.show();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    
     
 }
 
