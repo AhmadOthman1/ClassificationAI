@@ -66,7 +66,7 @@
                </font>
             </Label>
             <TextField id="textField" fx:id="epicNum" layoutX="52.0" layoutY="220.0" prefHeight="38.0" prefWidth="400.0" promptText="&gt;0" AnchorPane.topAnchor="220.0" />
-            <Button id="Tbutton" fx:id="clearButton" layoutX="79.0" layoutY="465.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="42.0" prefWidth="80.0" text="Clear" textFill="WHITE" AnchorPane.leftAnchor="79.0">
+            <Button id="Tbutton" fx:id="clearButton" layoutX="79.0" layoutY="465.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="42.0" prefWidth="80.0" text="Clear" textFill="WHITE" AnchorPane.leftAnchor="79.0" AnchorPane.topAnchor="469.0">
                <font>
                   <Font size="18.0" />
                </font>
@@ -76,7 +76,7 @@
                   <Font name="AGA Arabesque" size="20.0" />
                </font>
             </Label>
-            <Button id="Tbutton" fx:id="learnButton" layoutX="76.0" layoutY="519.0" mnemonicParsing="false" onAction="#learnButtonAction" prefHeight="42.0" prefWidth="350.0" text="Learn" textFill="WHITE">
+            <Button id="Tbutton" fx:id="learnButton" layoutX="76.0" layoutY="519.0" mnemonicParsing="false" onAction="#learnButtonAction" prefHeight="42.0" prefWidth="215.0" text="Learn" textFill="WHITE">
                <font>
                   <Font size="18.0" />
                </font>
@@ -86,7 +86,7 @@
                   <Font name="AGA Arabesque" size="20.0" />
                </font>
             </Label>
-            <Button id="Tbutton" fx:id="UndoButton" layoutX="169.0" layoutY="465.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="40.0" prefWidth="80.0" text="Undo" textFill="WHITE" AnchorPane.leftAnchor="169.0">
+            <Button id="Tbutton" fx:id="UndoButton" layoutX="169.0" layoutY="465.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="40.0" prefWidth="80.0" text="Undo" textFill="WHITE" AnchorPane.leftAnchor="169.0" AnchorPane.topAnchor="469.0">
                <font>
                   <Font size="18.0" />
                </font>
@@ -101,7 +101,7 @@
                   <Font name="AdobeGothicStd-Bold" size="16.0" />
                </font>
             </CheckBox>
-            <Button id="Tbutton" fx:id="backButton" layoutX="349.0" layoutY="466.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="40.0" prefWidth="80.0" text="Back" textFill="WHITE" AnchorPane.leftAnchor="349.0">
+            <Button id="Tbutton" fx:id="backButton" layoutX="349.0" layoutY="466.0" mnemonicParsing="false" onAction="#settingsButtonAction" prefHeight="40.0" prefWidth="80.0" text="Back" textFill="WHITE" AnchorPane.leftAnchor="349.0" AnchorPane.topAnchor="469.0">
                <font>
                   <Font size="18.0" />
                </font>
@@ -123,6 +123,11 @@
             <Label fx:id="TDErrorLabel" layoutX="228.0" layoutY="332.0" text="*Error: Please Enter a valid number (0-100)" textFill="RED" visible="false" />
             <Label fx:id="MEErrorLabel" layoutX="242.0" layoutY="426.0" text="*Error: Please Enter a valid number (0-1)" textFill="RED" visible="false" />
             <Label fx:id="settingErrorLabel" layoutX="156.0" layoutY="565.0" text="*Error: Please Enter a valid numbers" textFill="RED" visible="false" />
+            <Button id="Tbutton" fx:id="performanceButton" disable="true" layoutX="303.0" layoutY="519.0" mnemonicParsing="false" onAction="#learnButtonAction" prefHeight="42.0" prefWidth="130.0" text="performance" textFill="WHITE" AnchorPane.rightAnchor="70.0">
+               <font>
+                  <Font size="18.0" />
+               </font>
+            </Button>
          </children>
       </AnchorPane>
       <AnchorPane fx:id="drawPnael" layoutX="323.0" layoutY="220.0" maxHeight="640.0" maxWidth="640.0" minHeight="640.0" minWidth="640.0" onMouseClicked="#mouseClickd" prefHeight="640.0" prefWidth="640.0" style="-fx-background-color: #a3b18a;" visible="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="560.0" AnchorPane.topAnchor="0.0" />

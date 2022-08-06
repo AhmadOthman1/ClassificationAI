@@ -53,17 +53,18 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class FXMLClassificationMainController implements Initializable {
     boolean isLearn=false;//is the model learned
     boolean stopLearningFlag;// stop learinig if we reached the desired MES
-    int cNum;// classes number (2 - 4)
+    public static boolean mseCheckBoxIsSelected;
+    public static int cNum;// classes number (2 - 4)
     int numOfTestPoints;//number of testing points added by user after training ends
     int epicNumber;// input number of epics
     int testingDataPNumber;//persantage of testing points from all points to split
-    float []bestW;//best waight after testing in every epic
-    float [][]finalLineY;// final equations after trainig and testing
-    int [][]ConfusionMatrix;
     float mse=0;
-    float minMSE=2;// min mse for all epics
+    public static float []minMSE;// min mse for all epics
     float learningR; //learning rate
     float maxErrorNumber;
+    float []bestW;//best waight after testing in every epic
+    float [][]finalLineY;// final equations after trainig and testing
+    public static int [][]ConfusionMatrix;//Confusion Matrix values after training and testing
     String errorType;//for catching Errors
     Preceptron prec;
     Line line=new Line();
@@ -106,7 +107,6 @@ public class FXMLClassificationMainController implements Initializable {
     private Label CategorieNumError;
     @FXML
     private CheckBox mseCheckBox;
-    private TextField minMSETF;
     @FXML
     private Button saveButton;
     @FXML
@@ -127,19 +127,24 @@ public class FXMLClassificationMainController implements Initializable {
     private Label TDErrorLabel;
     @FXML
     private Label settingErrorLabel;
+    @FXML
+    private Button performanceButton;
       
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        epicNum.setText("10");
-        learningRate.setText("0.2");
+        epicNum.setText("30");
+        learningRate.setText("0.02");
+        testingDataPNum.setText("30");
+        maxError.setText("0");
         errorType="";
       //  minMSETF.setText("0.02");
         // TODO        
         
         bestW=new float[3];
+        performanceButton.setDisable(true);
     }    
 
     @FXML
@@ -147,20 +152,24 @@ public class FXMLClassificationMainController implements Initializable {
         //if CategorieNum is a number
         if(!CategorieNum.getText().trim().equals("")     &&      numaric(CategorieNum.getText().trim())     &&      Integer.parseInt(CategorieNum.getText().trim())>1   &&      Integer.parseInt(CategorieNum.getText().trim())<5){
             cNum=Integer.parseInt(CategorieNum.getText().trim());//num of classes
-            for(int i=0;i<cNum;i++)
-                classComboBox.getItems().add(i);//add classes to the combo box
-            classComboBox.getSelectionModel().select(0);//select firs element as defult
+            
             //clear old data
             drawPnael.getChildren().clear();
             points.clear();
             tPoints.clear();
             isLearn=false;
             mse=0;
-            minMSE=2;
+            minMSE=new float[cNum];
+            for(int i=0;i<cNum;i++){
+                minMSE[i]=2;
+            }
             classesColors.clear();
             numOfTestPoints=0;
             
             if(event.getSource()==startButton){
+                for(int i=0;i<cNum;i++)
+                    classComboBox.getItems().add(i);//add classes to the combo box
+                classComboBox.getSelectionModel().select(0);//select firs element as defult
                 for(int i=0;i<cNum;i++){//add colors to point classes
                     Random random = new Random();
                     // create a big random number - maximum is ffffff (hex) = 16777215 (dez)
@@ -182,6 +191,9 @@ public class FXMLClassificationMainController implements Initializable {
                     fileChooser.getExtensionFilters().addAll(extFilterXLSX);
                     File file = fileChooser.showOpenDialog(null);
                     if(file!=null){
+                        for(int i=0;i<cNum;i++)
+                            classComboBox.getItems().add(i);//add classes to the combo box
+                        classComboBox.getSelectionModel().select(0);//select firs element as defult
                         FileInputStream fis = new FileInputStream(file);   //obtaining bytes from the file  
                         //creating Workbook instance that refers to .xlsx file  
                         XSSFSheet sheet = new XSSFWorkbook(fis).getSheetAt(0);     //creating a Sheet object to retrieve object  
@@ -225,11 +237,13 @@ public class FXMLClassificationMainController implements Initializable {
                                 drawPnael.getChildren().add(arc);
                             }
                         }
+                        mainPagePane.setVisible(false);
+                        settingsPane.setVisible(true);
+                        drawPnael.setVisible(true);
+                        CategorieNumError.setVisible(false);
                     }
-                    mainPagePane.setVisible(false);
-                    settingsPane.setVisible(true);
-                    drawPnael.setVisible(true);
-                    CategorieNumError.setVisible(false);
+                    
+                    
                 }catch(Exception e){
                         System.out.println("file Error");
                 }
@@ -284,19 +298,25 @@ public class FXMLClassificationMainController implements Initializable {
             tPoints.clear();
             isLearn=false;
             mse=0;
-            minMSE=2;
+            for(int i=0;i<cNum;i++){
+                minMSE[i]=2;
+            }
+            performanceButton.setDisable(true);
         }
         else if(event.getSource()==backButton){
             drawPnael.getChildren().clear();
             points.clear();
             tPoints.clear();
             mse=0;
-            minMSE=2;
+            for(int i=0;i<cNum;i++){
+                minMSE[i]=2;
+            }
             isLearn=false;
             classComboBox.getItems().clear();
             drawPnael.setVisible(false);
             settingsPane.setVisible(false);
             mainPagePane.setVisible(true);
+            performanceButton.setDisable(true);
             
         }
          else if(event.getSource()==UndoButton){
@@ -352,7 +372,7 @@ public class FXMLClassificationMainController implements Initializable {
             testLabel.setText("");
             errorType="";//Error String to catch spacific Errors
             stopLearningFlag=false;
-            ConfusionMatrix=new int [cNum][cNum];
+            ConfusionMatrix=new int [cNum][cNum+1];
             finalLineY=new float[cNum][3];
             try{
                 settingErrorLabel.setVisible(false);
@@ -365,7 +385,9 @@ public class FXMLClassificationMainController implements Initializable {
                     throw new NullPointerException();
                 }
                  mse=0;
-                 minMSE=2;
+                for(int i=0;i<cNum;i++){
+                    minMSE[i]=2;
+                }
 
                 if(!isLearn)//split data for one time 
                     if( testingDataPNumber>=0 && testingDataPNumber<=100){
@@ -401,7 +423,6 @@ public class FXMLClassificationMainController implements Initializable {
                 }
                 for(int classIndex=0; classIndex<cNum;classIndex++){//start learning class by class
                     mse=0;
-                    minMSE=2;
                     stopLearningFlag=false;
                     prec = new Preceptron(learningR);//create preceptron
                     learn(classIndex,prec);
@@ -410,16 +431,7 @@ public class FXMLClassificationMainController implements Initializable {
                         break;
                 }
                 isLearn=true;
-                fillConfusionMatrix();
-                System.out.println(" \t0\t1");
-                for(int i=0 ; i<cNum;i++){
-                    System.out.print("{{"+i+"}}");
-                    for(int j=0 ; j<cNum;j++){
-                        System.out.print("\t"+ConfusionMatrix[i][j]+"\t");
-                    }
-                    System.out.println("");
-                }
-                
+                performanceButton.setDisable(false);
             }catch(NumberFormatException e){
                 settingErrorLabel.setVisible(true);
             }catch(NullPointerException e){
@@ -434,6 +446,11 @@ public class FXMLClassificationMainController implements Initializable {
             }
             
          }
+        else if(event.getSource()==performanceButton){
+            ConfusionMatrix=new int [cNum][cNum+1];
+            fillConfusionMatrix();
+            ShowConfusionMatrix();
+        }
     }
     private void learn(int classIndex,Preceptron prec) {
         try{
@@ -464,6 +481,7 @@ public class FXMLClassificationMainController implements Initializable {
             float y2L2= map(prec.findLine(x2L2),-1,1,(float)drawPnael.getHeight(),0);
             line=new Line(0,y1L2,drawPnael.getWidth(),y2L2);
             line.setStroke(Color.web(classesColors.get(classIndex)));
+            line.setStrokeWidth(3);
             drawPnael.getChildren().add(line);
             for(int i=0;i<3;i++){
                finalLineY[classIndex][i]= prec.w[i];
@@ -479,6 +497,7 @@ public class FXMLClassificationMainController implements Initializable {
             float x2= map((float)drawPnael.getWidth(),0,(float)drawPnael.getWidth(),-1,1);
             float y2= map(prec.findLine(x2),-1,1,(float)drawPnael.getHeight(),0);
             line=new Line(0,y1,drawPnael.getWidth(),y2);
+            line.setStrokeWidth(3);
             line.setStroke(Color.web(classesColors.get(classIndex)));
             drawPnael.getChildren().add(line);
         }
@@ -497,14 +516,16 @@ public class FXMLClassificationMainController implements Initializable {
         if(mseCheckBox.isSelected()){//if MSE checkBox selected test the data
             mse= 1/(float)tPoints.size() * (prec.mse);
             if(mse<=maxErrorNumber){
+                minMSE[classIndex]=mse;
+                System.out.println(""+classIndex+" : "+mse);
                 bestW[0]=prec.w[0];
                 bestW[1]=prec.w[1];
                 bestW[2]=prec.w[2];
                 stopLearningFlag=true;
             }
-            else if(minMSE>mse){
-                System.out.println(mse);
-                minMSE=mse;
+            else if(minMSE[classIndex]>mse){
+                System.out.println(""+classIndex+" : "+mse);
+                minMSE[classIndex]=mse;
                 bestW[0]=prec.w[0];
                 bestW[1]=prec.w[1];
                 bestW[2]=prec.w[2];
@@ -530,16 +551,21 @@ public class FXMLClassificationMainController implements Initializable {
             for(int conMatrix=0 ; conMatrix<tPoints.size();conMatrix++){
                 if(tPoints.get(conMatrix).classNum==pClass){
                     float []point= {tPoints.get(conMatrix).x,tPoints.get(conMatrix).y,1};
-                    ConfusionMatrix[pClass][testAPoint(point)]++;
+                    int classIndex=testAPoint(point);
+                    if(classIndex==-1)
+                        ConfusionMatrix[pClass][cNum]++;
+                    else
+                        ConfusionMatrix[pClass][classIndex]++;
                 }
             }
         }
-        ShowConfusionMatrix();
+        
     }
     @FXML
     private void checkBoxAction(ActionEvent event) {
         if(event.getSource()==mseCheckBox){//   Disable/Enable maxError TextField
                 maxError.setDisable(!mseCheckBox.isSelected());
+                mseCheckBoxIsSelected=mseCheckBox.isSelected();
         }
     }
     private boolean numaric(String str) {//if string is num
@@ -562,16 +588,19 @@ public class FXMLClassificationMainController implements Initializable {
               tPoints.get(i).arc.setStroke(Color.RED);
               points.remove(tIndex);
         }
-        System.out.println(tPoints.size());
     }
 
     private void ShowConfusionMatrix() {
          Parent root;
         try {
-            root = FXMLLoader.load(getClass().getClassLoader().getResource("path/to/other/view.fxml"));
+            root = FXMLLoader.load(getClass().getResource("FXMLConfusionMatrix.fxml"));
             Stage stage = new Stage();
             stage.setTitle("Confusion Matrix");
-            stage.setScene(new Scene(root, 450, 450));
+            stage.setScene(new Scene(root, 1200, 600));
+            stage.setMinWidth(1200);
+            stage.setMinHeight(600);
+            stage.setHeight(600);
+            stage.setWidth(1200);
             stage.show();
         }
         catch (IOException e) {
