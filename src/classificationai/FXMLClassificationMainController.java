@@ -135,8 +135,8 @@ public class FXMLClassificationMainController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        epicNum.setText("30");
-        learningRate.setText("0.02");
+        epicNum.setText("50");
+        learningRate.setText("0.001");
         testingDataPNum.setText("30");
         maxError.setText("0");
         errorType="";
@@ -517,14 +517,12 @@ public class FXMLClassificationMainController implements Initializable {
             mse= 1/(float)tPoints.size() * (prec.mse);
             if(mse<=maxErrorNumber){
                 minMSE[classIndex]=mse;
-                System.out.println(""+classIndex+" : "+mse);
                 bestW[0]=prec.w[0];
                 bestW[1]=prec.w[1];
                 bestW[2]=prec.w[2];
                 stopLearningFlag=true;
             }
             else if(minMSE[classIndex]>mse){
-                System.out.println(""+classIndex+" : "+mse);
                 minMSE[classIndex]=mse;
                 bestW[0]=prec.w[0];
                 bestW[1]=prec.w[1];
@@ -579,7 +577,6 @@ public class FXMLClassificationMainController implements Initializable {
     private float map(float value,float  minA,float  maxA, float minB,float  maxB) {//scale data (value , minOldDataRange , maxOldDataRange , minNewDataRange , maxNewDataRange)
         return (1 - ((value - minA) / (maxA - minA))) * minB + ((value - minA) / (maxA - minA)) * maxB;
     }
-
     private void splitData(float p) {//split data to training and testing
         int testingDataSize=  (int) (points.size()*p/100);
         for(int i=0;i<testingDataSize;i++){
@@ -589,7 +586,6 @@ public class FXMLClassificationMainController implements Initializable {
               points.remove(tIndex);
         }
     }
-
     private void ShowConfusionMatrix() {
          Parent root;
         try {
@@ -607,8 +603,5 @@ public class FXMLClassificationMainController implements Initializable {
             e.printStackTrace();
         }
     }
-
-    
-    
 }
 
