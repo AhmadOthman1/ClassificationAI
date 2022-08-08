@@ -148,7 +148,7 @@ public class FXMLClassificationMainController implements Initializable {
     }    
 
     @FXML
-    private void actionButton(ActionEvent event) {
+    private void actionButton(ActionEvent event) {//start
         //if CategorieNum is a number
         if(!CategorieNum.getText().trim().equals("")     &&      numaric(CategorieNum.getText().trim())     &&      Integer.parseInt(CategorieNum.getText().trim())>1   &&      Integer.parseInt(CategorieNum.getText().trim())<5){
             cNum=Integer.parseInt(CategorieNum.getText().trim());//num of classes
