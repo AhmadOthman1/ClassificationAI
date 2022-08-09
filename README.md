@@ -9,7 +9,7 @@ The algorithm classify the data that contains more than 2 classes (Multi-class) 
 
 ### Main Page
 
-  In this page, You can enter number of classes/categories `[2-4]` and click start to open an empty panel to enter the data manually, Or you can open a Excel sheet that contains the data in specific format.
+  In this page, You can enter number of classes/categories `[2-4]` and click start to open an empty panel to enter the data manually, Or you can open a Excel sheet that contains the data in [specific format](https://github.com/AhmadOthman1/ClassificationAI/blob/master/README.md#excel-file-format).
   
   ![image](https://user-images.githubusercontent.com/103585755/183696738-b6219563-7664-499f-87e5-a72acf643cd4.png)
 
@@ -40,7 +40,7 @@ The algorithm classify the data that contains more than 2 classes (Multi-class) 
   
   * Clear: Clear the drowing pane from points/lines.
   * Undo: Delete last point added to the drowing pane.
-  * Save: Saves the pints in Excel sheet with specific format.
+  * Save: Saves the pints in Excel sheet with [specific format](https://github.com/AhmadOthman1/ClassificationAI/blob/master/README.md#excel-file-format).
   * Back: Back to the main page.
   * Learn: Start learning process.
   * performance: Show system performance.
