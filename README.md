@@ -58,8 +58,25 @@ After click learn button, you can add test points and see the class based on the
 ### performance Page
   
   The performance button shows the performance page that contains: The confusion matrix, Accuracy, Misclassification rate, MSE for all Lines
+  
 ![image](https://user-images.githubusercontent.com/103585755/183710310-cf10b773-973d-4306-ab0d-4ab8c060fcdb.png)
 ![image](https://user-images.githubusercontent.com/103585755/183710683-c2eaa1fa-2482-4475-a074-8ff044b97687.png)
+
+
+
+# Excel File Format
+  
+  The save button saves the points in an Excel file that contains 4 columns (x, y, class Name, class color in HEX), The file name indicates the date and time it was saved (the number of classes).
+  
+  ![image](https://user-images.githubusercontent.com/103585755/183712191-2484f913-d090-4508-9213-5521434ae123.png)
+  
+  ![image](https://user-images.githubusercontent.com/103585755/183712786-316c8ff5-27cf-4f21-bf7c-fc860f0bad5d.png)
+
+  ***if you want to create/fill the Excel sheet manually You must stick to the order of the columns, the names of the classes `[0-3]`, number of classes `[2-4]`***
+  
+
+
+
 
 
 
